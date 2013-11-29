@@ -6,7 +6,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 # Exporting the saluta routine
-our @EXPORT = qw(MS_CheckErrorAndSendResponse MS_WhoAmI MS_AssignInternalErrorCode);
+our @EXPORT = qw(MS_CheckInternalErrorAndSendResponse MS_WhoAmI MS_AssignInternalErrorCode);
 # Exporting the saluta2 routine on demand basis.
 #our @EXPORT_OK = qw(saluta2);
 
@@ -53,7 +53,7 @@ use MSResponseToWindUtil;
 #
 # Nota: puo' chiamare una exit() e terminare l'esecuzione!!
 #
-sub MS_CheckErrorAndSendResponse
+sub MS_CheckInternalErrorAndSendResponse
 {
 	
 	my $ErrorHash_ptr = shift;
@@ -67,11 +67,11 @@ sub MS_CheckErrorAndSendResponse
 	{
 		$rit = 1;
 		
-		$LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [MS_CheckErrorAndSendResponse]: Rilevato errore interno - InternalCode = $ErrorHash_ptr->{InternalCode}  --  InternalDescr = $ErrorHash_ptr->{InternalDescr}");
+		$LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [MS_CheckInternalErrorAndSendResponse]: Rilevato errore interno - InternalCode = $ErrorHash_ptr->{InternalCode}  --  InternalDescr = $ErrorHash_ptr->{InternalDescr}");
 		
 		if ($ErrorHash_ptr->{StopEsecution})
 		{
-			$LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [MS_CheckErrorAndSendResponse]: L'errore mi costringe a terminare l'esecuzione.");
+			$LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [MS_CheckInternalErrorAndSendResponse]: L'errore mi costringe a terminare l'esecuzione.");
 			
 			MS_Response_GenericInternalError_BuildAndSend();
 			
@@ -131,7 +131,6 @@ sub MS_AssignInternalErrorCode
 								_error_code_base_ => 10,
 								
 								MS_LoadAndCheckConfigForWind => {
-									
 									_error_code_base_ => 10,
 									10 => { descr => "Non trovo la sezione 'PM_Wind_settings' nel Ticket.xml. Interrompo l'esecuzione."},
 									20 => { descr => "Non trovo la sezione 'Category_Incident_PM_Wind' nel Ticket.xml. Interrompo l'esecuzione."},
@@ -146,7 +145,6 @@ sub MS_AssignInternalErrorCode
 								_error_code_base_ => 11,
 								
 								MS_XMLCheckParsing => {
-									
 									_error_code_base_ => 10,
 									10 => { descr => "Errore imprevisto durante parsing XML" },
 									20 => { descr => "L'XML sembra malformato... esco."},
@@ -159,9 +157,32 @@ sub MS_AssignInternalErrorCode
 								_error_code_base_ => 12,
 								
 								MS_ReadHttpPost => {
-									
 									_error_code_base_ => 10,
 									10 => { descr => "Arrivato qualcosa via HTTP ma non via POST. Interrompo l'esecuzione." },
+								}
+							},
+		
+		
+		
+		MSRequestFromWindActionsUtil => {
+								_error_code_base_ => 13,
+								
+								MS_do_Create => {
+									_error_code_base_ => 10,
+									10 => { descr => "-1 -> KO (errore durante la creazione dell'Alarm)" },
+									20 => { descr => "-2 -> KO (errore durante l'aggiornamento di qualche freetext/freetime)" },
+									30 => { descr => "-3 -> KO (errore durante la creazione della nota)" },
+									40 => { descr => "-4 -> KO (errore durante la creazione di un allegato)" },
+								}
+							},
+		
+	
+		MSRequestFromWindUtil => {
+								_error_code_base_ => 14,
+								
+								MS_RequestParsing => {
+									_error_code_base_ => 10,
+									10 => { descr => "Il parsing XML e' saltato: credo XML malformato. Esco." },
 								}
 							},
 		

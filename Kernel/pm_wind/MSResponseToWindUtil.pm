@@ -6,7 +6,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 # Exporting the saluta routine
-our @EXPORT = qw(MS_ResponseBuild);
+our @EXPORT = qw(MS_ResponseBuild MS_ResponseBuildAndSend MS_Response_OK_BuildAndSend MS_Response_GenericInternalError_BuildAndSend);
 # Exporting the saluta2 routine on demand basis.
 #our @EXPORT_OK = qw(saluta2);
 
@@ -51,8 +51,14 @@ use lib "$Bin/../cpan-lib";
 #</TicketResponse>
 #</OTRS_API>
 
-my $MS_Response_container_start = '<?xml version="1.0" encoding="UTF-8"?>';
-$MS_Response_container_start .= "\n<OTRS_API>\n<TicketResponse>\n";
+
+
+#my $MS_HTTP_header = "Content-type: text/html\n\n"; #HTML
+my $MS_HTTP_header = "Content-Type: text/xml\n\n"; #XML
+ 
+
+my $MS_Response_container_start = '<?xml version="1.0" encoding="UTF-8"?>'."\n\n";
+$MS_Response_container_start .= "<OTRS_API>\n<TicketResponse>\n";
 my $MS_Response_container_end = "\n</TicketResponse>\n</OTRS_API>\n";
 
 my $MS_Response_header_container_tag = 'Header';
@@ -118,6 +124,28 @@ sub MS_ResponseBuild
 }
 
 
+
+
+
+#Come la MS_ResponseBuild, con aggiunto l'invio (la print)
+sub MS_ResponseBuildAndSend
+{
+	my $MS_Response_info_ptr = shift;
+	
+	#serve l'header prima di ogni cosa...
+	print $MS_HTTP_header;
+	
+	my $response = MS_ResponseBuild($MS_Response_info_ptr);
+	print $response;
+
+	
+	return $response;
+}
+
+
+
+
+
 # input:
 #
 # Puntatore ad un hash che contiene le seguenti info:
@@ -145,7 +173,7 @@ sub MS_ResponseBuild_header
 	#$MS_Response_header_ptr->{TransactionId} = "$year$mon$mday$hour$min$sec";
 	
 	my $XML_tags = '';
-	foreach my $key (%{$MS_Response_header_ptr})
+	foreach my $key (keys %{$MS_Response_header_ptr})
 	{
 		$XML_tags .= '<'.$key.'>'.$MS_Response_header_ptr->{$key}.'</'.$key.">\n";
 	}
@@ -177,7 +205,7 @@ sub MS_ResponseBuild_body
 	
 
 	my $XML_tags = '';
-	foreach my $key (%{$MS_Response_body_ptr})
+	foreach my $key (keys %{$MS_Response_body_ptr})
 	{
 		$XML_tags .= '<'.$key.'>'.$MS_Response_body_ptr->{$key}.'</'.$key.">\n";
 	}
@@ -188,6 +216,81 @@ sub MS_ResponseBuild_body
 	
 	return $XML_body;
 }
+
+
+
+
+
+
+
+#-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+
+
+
+
+
+################################################
+# Invia una response di OK
+################################################
+# input:
+#  - TransactionId: da conservare nella response (uguale alla request) - opzionale
+#  - TicketID: TicketID dell'Alarm appena creato (se si tratta di una Response ad una Create da parte di Wind) - opzionale
+#
+# output:
+#	<nulla>
+#
+sub MS_Response_OK_BuildAndSend
+{
+	my $TransactionId = shift;
+	my $TicketID = shift;
+
+	my $infoHashForResponse = {
+			StatusCode => 0,
+			TransactionId => $TransactionId,
+	};
+
+	$infoHashForResponse->{TicketID} = $TicketID if(defined($TicketID) and $TicketID !~ m/^\s*$/i);
+	
+	my $response = MS_ResponseBuild($infoHashForResponse);
+
+	print $response;
+}
+
+
+
+
+
+################################################
+# Invia una generica response di errore interno
+################################################
+# input:
+# transactionId da conservare nella response (uguale alla request) - opzionale
+#
+# output:
+#	<nulla>
+#
+sub MS_Response_GenericInternalError_BuildAndSend
+{
+	my $TransactionId = shift;
+	
+	my $infoHashForResponse = {
+		StatusCode => 1,
+		ErrorMessage => 400,
+		ErrorDescription => 'Errore interno',
+		TransactionId => $TransactionId,
+	};
+
+	
+	my $response = MS_ResponseBuild($infoHashForResponse);
+	
+	
+	print $response;
+}
+
+
+
+
 
 
 

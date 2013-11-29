@@ -6,7 +6,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 # Exporting the saluta routine
-our @EXPORT = qw(MS_RequestParsing);
+our @EXPORT = qw(MS_do_action);
 # Exporting the saluta2 routine on demand basis.
 #our @EXPORT_OK = qw(saluta2);
 
@@ -32,23 +32,28 @@ use MSTicketUtil;
 
 
 #Esamina la Request e richiama la sub corretta
+#ritorna:
+# 0 -> se ERRORE
+# 1 -> se ok
 sub MS_do_action
 {	
    my $MS_ConfigHash_ptr = shift;
 
+	my $rit = 0;
+	
 	if(exists($MS_ConfigHash_ptr->{RequestHash}))
 	{	
 		if($MS_ConfigHash_ptr->{RequestHash}->{RequestType} eq $MS_ConfigHash_ptr->{RequestHash}->{RequestTypeCREATE})
 		{
-			MS_do_Create($MS_ConfigHash_ptr);
+			$rit = MS_do_Create($MS_ConfigHash_ptr);
 		}
 		elsif($MS_ConfigHash_ptr->{RequestHash}->{RequestType} eq $MS_ConfigHash_ptr->{RequestHash}->{RequestTypeUPDATE})
 		{
-			MS_do_Update($MS_ConfigHash_ptr);
+			$rit = MS_do_Update($MS_ConfigHash_ptr);
 		}
 		elsif($MS_ConfigHash_ptr->{RequestHash}->{RequestType} eq $MS_ConfigHash_ptr->{RequestHash}->{RequestTypeNOTIFY})
 		{
-			MS_do_Notify($MS_ConfigHash_ptr);
+			$rit = MS_do_Notify($MS_ConfigHash_ptr);
 		}
 		else
 		{
@@ -60,7 +65,7 @@ sub MS_do_action
 	}
 	
 
-
+	return $rit;
 }
 
 
@@ -69,48 +74,102 @@ sub MS_do_action
 
 
 #gestisce l'esecuzione della Create
+#ritorna:
+# 0 -> se ERRORE
+# 1 -> se ok
 sub MS_do_Create
 {	
    my $MS_ConfigHash_ptr = shift;
 
+	my $rit = 0;
+	
 	if(exists($MS_ConfigHash_ptr->{RequestHash}))
 	{
 
+		my $result = MS_CreateAlarm($MS_ConfigHash_ptr);
+		
+		if ($result > 0) #Alarm creato interamente con successo -> Alarm_ID = $result
+		{
+			$MS_ConfigHash_ptr->{NewAlarmID} = $result;
+			$rit = 1; # -> ok
+		}
+		else
+		{
+			my $sub_err_identity_number = 0;
+			if ($result == -1) # -1 -> KO (errore durante la creazione dell'Alarm)
+			{
+				$sub_err_identity_number = 10;
+			}
+			elsif ($result == -2) # -2 -> KO (errore durante l'aggiornamento di qualche freetext/freetime)
+			{
+				$MS_ConfigHash_ptr->{NewAlarmID} = $result;
+				$sub_err_identity_number = 20;
+			}
+			elsif ($result == -3) # -3 -> KO (errore durante la creazione della nota)
+			{
+				$MS_ConfigHash_ptr->{NewAlarmID} = $result;
+				$sub_err_identity_number = 30;
+			}
+			elsif ($result == -4) # -4 -> KO (errore durante la creazione di un allegato)
+			{
+				$MS_ConfigHash_ptr->{NewAlarmID} = $result;
+				$sub_err_identity_number = 40;
+			}
+			
+			#setto l'errore che verra' controllato nella subroutine a monte...
+			MS_AssignInternalErrorCode( MS_WhoAmI(), $sub_err_identity_number, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
+			#$errors_ptr->{StopEsecution} = 1; # "prenoto" una exit	
+		}
+
+		
 	}
-
-
+	
+	return $rit;
 }
 
 
 
 
 #gestisce l'esecuzione della Update
+#ritorna:
+# 0 -> se ERRORE
+# 1 -> se ok
 sub MS_do_Update
 {	
    my $MS_ConfigHash_ptr = shift;
+	
+	my $rit = 0;
 
 	if(exists($MS_ConfigHash_ptr->{RequestHash}))
 	{
 
 	}
 
-
+	return $rit;
 }
 
 
 
 #gestisce l'esecuzione della Notify
+#ritorna:
+# 0 -> se ERRORE
+# 1 -> se ok
 sub MS_do_Notify
 {	
    my $MS_ConfigHash_ptr = shift;
 
+	my $rit = 0;
+	
 	if(exists($MS_ConfigHash_ptr->{RequestHash}))
 	{
 
 	}
 
-
+	return $rit;
 }
+
+
+
 
 
 1;

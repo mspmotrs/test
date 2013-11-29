@@ -1,4 +1,4 @@
-package MSConfigUtil;
+package MSXMLUtil;
 use strict;
 use warnings;
 
@@ -22,6 +22,17 @@ use lib "$Bin/../cpan-lib";
 
 
 
+# ----------------- Moduli custom necessari ------------------
+use MSErrorUtil;
+
+
+
+
+
+
+
+
+
 
 
 sub MS_XMLCheckParsing
@@ -29,6 +40,7 @@ sub MS_XMLCheckParsing
 	my $MS_ConfigHash_ptr = shift;
 	my $XML_content = shift;
 
+	my $rit = 1;
 
 		
 	 # __DIE__ hooks may modify error messages
@@ -39,7 +51,13 @@ sub MS_XMLCheckParsing
 										my $context = shift;
 										my $x="[MS] Errore durante parsing XML: $context\n";
 										$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} $x");
-										die $x; 
+										      
+										#setto l'errore che verra' controllato nella subroutine a monte...
+										MS_AssignInternalErrorCode( MS_WhoAmI(), 10, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
+										$MS_ConfigHash_ptr->{Errors}->{StopEsecution} = 1; # "prenoto" una exit
+      
+										#Non forzo la exit qui... lo faro' solo nella gestione dell'errore (modulo MSErrorUtil)
+										#die $x;
 									};
 		eval 
 		{  
@@ -59,17 +77,24 @@ sub MS_XMLCheckParsing
 		{
 			#print "\nL'XML sembra malformato: esco...\n" ; #TODO
 			$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} L'XML sembra malformato... esco.");
-			exit(1);
+      
+			#setto l'errore che verra' controllato nella subroutine a monte...
+			MS_AssignInternalErrorCode( MS_WhoAmI(), 20, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
+			$MS_ConfigHash_ptr->{Errors}->{StopEsecution} = 1; # "prenoto" una exit
+			
+			#Non forzo la exit qui... lo faro' solo nella gestione dell'errore (modulo MSErrorUtil)
+			#exit(1);
 		}
 		else
 		{
 			my @XMLStructure;
 			my @XMLHash; # in OTRS lo chiamano cosi' anche se e' un array... bha'...
 
-			print "\nIl file di configurazione sembra corretto...\n"; 
+			#print "\nIl file di configurazione sembra corretto...\n"; 
 
 			@XMLStructure = $MS_ConfigHash_ptr->{OTRS_XMLObject}->XMLParse(String => $XML_content); 
 			@XMLHash = $MS_ConfigHash_ptr->{OTRS_XMLObject}->XMLStructure2XMLHash(XMLStructure => \@XMLStructure);
+			#@{$XMLHash_ptr} = $MS_ConfigHash_ptr->{OTRS_XMLObject}->XMLStructure2XMLHash(XMLStructure => \@XMLStructure);
 		
 		
 			return \@XMLHash;

@@ -23,6 +23,7 @@ use lib "$Bin/../cpan-lib";
 
 
 # ----------------- Moduli custom necessari ------------------
+use MSErrorUtil;
 
 
 
@@ -38,6 +39,7 @@ use lib "$Bin/../cpan-lib";
 #     ptr alla var da popolare con quanto letto dal POST
 #		ptr al $LogObject_ptr di OTRS (per il logging) - opzionale
 #		logging_level (impostato nella config specifica PMWind) - opzionale
+#		error_ptr (puntatore alla struttura degli errori) - opzionale
 #
 # output:
 #     contenuto arrivato via POST
@@ -51,6 +53,7 @@ sub MS_ReadHttpPost
 	my $content_ptr = shift;
 	my $LogObject_ptr = shift;
 	my $logLevel = shift;
+	my $errors_ptr = shift;
 	
 	# ----------------- l'XML arriva via POST  (inizio) -----------------
     my ($MS_buffer, @MS_coppie, $MS_coppia, $MS_name, $MS_value, %MS_FORM);
@@ -68,8 +71,18 @@ sub MS_ReadHttpPost
 		{
 			$LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [MS_ReadHttpPost]: Arrivato qualcosa via HTTP ma non via POST. Interrompo l'esecuzione. Dettagli:\n $MS_buffer");
 		}
+
+      
+		if (exists($errors_ptr->{InternalCode}))
+		{
+			#setto l'errore che verra' controllato nella subroutine a monte...
+			MS_AssignInternalErrorCode( MS_WhoAmI(), 10, \$errors_ptr->{InternalCode}, \$errors_ptr->{InternalDescr});
+			$errors_ptr->{StopEsecution} = 1; # "prenoto" una exit
+		}
 		
-    	exit(2); #solo POST viene supportato
+      #Non forzo la exit qui... lo faro' solo nella gestione dell'errore (modulo MSErrorUtil)
+    	#exit(2); #solo POST viene supportato
+		
 		#$MS_buffer = $ENV{'QUERY_STRING'};
     }
     

@@ -1,0 +1,210 @@
+package MSConfigUtil;
+use strict;
+use warnings;
+
+require Exporter;
+our @ISA = qw(Exporter);
+
+# Exporting the saluta routine
+our @EXPORT = qw(MS_ConfigFileParsing);
+# Exporting the saluta2 routine on demand basis.
+#our @EXPORT_OK = qw(saluta2);
+
+
+
+
+# use ../../ as lib location
+use FindBin qw($Bin);
+use lib "$Bin";
+use lib "$Bin/..";
+use lib "$Bin/../cpan-lib";
+
+
+
+
+# ----------------- Moduli custom necessari ------------------
+use MSXMLUtil;
+
+
+
+
+
+
+
+
+sub MS_ConfigFileParsing
+{	
+   my $MS_ConfigHash_ptr = shift;
+
+	# ------ apertura del file di config ------
+	my $config_file_content = '';
+
+	#ATTENZIONE: questo path suppone che questo eseguibile si trova in <OTRS_path>bin/cgi-bin/
+	#my $config_file_name = "$Bin/../../Kernel/pm_wind/config_pm_wind.conf";
+	open(INGRESSO, "< $MS_ConfigHash_ptr->{config_file_name}") or die "\nNon riesco ad aprire il file $MS_ConfigHash_ptr->{config_file_name} \n";
+	while(my $riga = <INGRESSO>) 
+	{
+		$config_file_content .= $riga;
+	}
+	close(INGRESSO);
+	# ------ apertura del file di config (fine) ------
+
+
+
+
+   #proviamo a fare il parsing il parsing
+   my $XMLHash_ptr = MS_XMLCheckParsing($MS_ConfigHash_ptr, $config_file_content);
+   MS_ConfigFileToConfigHash($MS_ConfigHash_ptr, $XMLHash_ptr) ;
+
+}
+
+
+
+
+
+
+
+
+
+#Parte dall'array costruito durante il parsing e popola l'hash di configurazione
+sub MS_ConfigFileToConfigHash
+{
+	my $ConfigHash_ptr = shift; #l'hash puntato conterra' le configurazione nella forma CAMPO => VALORE
+   my $XMLHash_ptr = shift; #robaccia parsata da OTRS...
+	
+	my $rit = 0;
+	
+	
+	
+	#SystemUserID: utenza di sistema con la quale verranno fatte le operazioni
+	if(exists($XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{system_user_id}[1]->{Content}))
+    {
+    	$ConfigHash_ptr->{SystemUserID} = $XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{system_user_id}[1]->{Content};
+    	
+		if($ConfigHash_ptr->{SystemUserID} !~ m/^\s*\d+\s*$/i )
+		{
+			$rit = 1;	
+			$ConfigHash_ptr->{ErrorCode} = 2;
+			$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: system_user_id in formato non valido';			
+		}
+    }
+    else #il tag NON esiste
+    {
+    	$rit = 1;	
+		$ConfigHash_ptr->{ErrorCode} = 1;
+		$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: manca un tag (system_user_id)';
+    }
+    
+	
+	
+	 
+	#LogLevel: verbosita' del log (da 1 a 3)
+	if(exists($XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{log_level}[1]->{Content}))
+    {
+    	$ConfigHash_ptr->{LogLevel} = $XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{log_level}[1]->{Content};
+    	
+		if($ConfigHash_ptr->{LogLevel} !~ m/^\s*[123]\s*$/i )
+		{
+			$rit = 1;	
+			$ConfigHash_ptr->{ErrorCode} = 2;
+			$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: log_level in formato non valido (valori permessi: 1, 2, 3)';			
+		}
+    }
+    else #il tag NON esiste
+    {
+    	$rit = 1;	
+		$ConfigHash_ptr->{ErrorCode} = 1;
+		$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: manca un tag (log_level)';
+    }
+	 
+
+	 
+	#IncidentToWindQueueId
+	if(exists($XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{incident_for_wind_queue_id}[1]->{Content}))
+    {
+    	$ConfigHash_ptr->{IncidentToWindQueueId} = $XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{incident_for_wind_queue_id}[1]->{Content};
+    	
+		if($ConfigHash_ptr->{IncidentToWindQueueId} !~ m/^\s*\d+\s*$/i ) #mi aspetto un id numerico
+		{
+			$rit = 1;	
+			$ConfigHash_ptr->{ErrorCode} = 2;
+			$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: incident_for_wind_queue_id in formato non valido';			
+		}
+    }
+    else #il tag NON esiste
+    {
+    	$rit = 1;	
+		$ConfigHash_ptr->{ErrorCode} = 1;
+		$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: manca un tag (incident_for_wind_queue_id)';
+    }
+	 
+
+	 
+	#AlarmToWindQueueId
+	if(exists($XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{alarm_to_wind_queue_id}[1]->{Content}))
+    {
+    	$ConfigHash_ptr->{AlarmToWindQueueId} = $XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{alarm_to_wind_queue_id}[1]->{Content};
+    	
+		if($ConfigHash_ptr->{AlarmToWindQueueId} !~ m/^\s*\d+\s*$/i ) #mi aspetto un id numerico
+		{
+			$rit = 1;	
+			$ConfigHash_ptr->{ErrorCode} = 2;
+			$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: alarm_to_wind_queue_id in formato non valido';			
+		}
+    }
+    else #il tag NON esiste
+    {
+    	$rit = 1;	
+		$ConfigHash_ptr->{ErrorCode} = 1;
+		$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: manca un tag (alarm_to_wind_queue_id)';
+    }
+	 
+
+	 
+	#AlarmFromWindQueueId
+	if(exists($XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{alarm_from_wind_queue_id}[1]->{Content}))
+    {
+    	$ConfigHash_ptr->{AlarmFromWindQueueId} = $XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{alarm_from_wind_queue_id}[1]->{Content};
+    	
+		if($ConfigHash_ptr->{AlarmFromWindQueueId} !~ m/^\s*\d+\s*$/i ) #mi aspetto un id numerico
+		{
+			$rit = 1;	
+			$ConfigHash_ptr->{ErrorCode} = 2;
+			$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: alarm_from_wind_queue_id in formato non valido';			
+		}
+    }
+    else #il tag NON esiste
+    {
+    	$rit = 1;	
+		$ConfigHash_ptr->{ErrorCode} = 1;
+		$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: manca un tag (alarm_from_wind_queue_id)';
+    }
+	 
+
+	 
+	#EricssonQueueId
+	if(exists($XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{ericsson_queue_id}[1]->{Content}))
+    {
+    	$ConfigHash_ptr->{EricssonQueueId} = $XMLHash_ptr->[0]->{CONFIG_PM_WIND}[1]->{ericsson_queue_id}[1]->{Content};
+    	
+		if($ConfigHash_ptr->{EricssonQueueId} !~ m/^\s*\d+\s*$/i ) #mi aspetto un id numerico
+		{
+			$rit = 1;	
+			$ConfigHash_ptr->{ErrorCode} = 2;
+			$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: ericsson_queue_id in formato non valido';			
+		}
+    }
+    else #il tag NON esiste
+    {
+    	$rit = 1;	
+		$ConfigHash_ptr->{ErrorCode} = 1;
+		$ConfigHash_ptr->{ErrorDescription} = 'Errore di configurazione: manca un tag (ericsson_queue_id)';
+    }
+}
+
+
+
+
+
+
+1;
