@@ -36,19 +36,27 @@ use MSErrorUtil;
 #
 # input:
 #     ConfigHash_ptr (instanziato in TTActionReceiver_PMWind.pl)
+#     ConfigObject = shift; #opzionale (lo uso all'interno di alcuni controlli prima di aprire un Alarm o un Incident VERSO Wind)
 #
 # output:
 #     <nulla>
 #
-# Nota: puo' chiamare una exit() e terminare l'esecuzione!!
-#
+# Nota: puo' PRENOTARE una exit() per terminare l'esecuzione (ma e' solo una indicazione per la funzione chiamante)
+# No
 sub MS_LoadAndCheckConfigForWind
 {
 	
 	my $MS_ConfigHash_ptr = shift;
-   my $ConfigObject = $MS_ConfigHash_ptr->{OTRS_ConfigObject};
+   my $ConfigObject = shift; #opzionale
+
+   $ConfigObject = $MS_ConfigHash_ptr->{OTRS_ConfigObject} if(!defined($ConfigObject) and exists($MS_ConfigHash_ptr->{OTRS_ConfigObject}) );
+   $MS_ConfigHash_ptr->{Errors} = {} if(!exists($MS_ConfigHash_ptr->{Errors}));
+   $MS_ConfigHash_ptr->{Errors}->{InternalCode} = 0 if(!exists($MS_ConfigHash_ptr->{Errors}->{InternalCode}));
+   $MS_ConfigHash_ptr->{Errors}->{InternalDescr} = '' if(!exists($MS_ConfigHash_ptr->{Errors}->{InternalDescr}));
+	$MS_ConfigHash_ptr->{Errors}->{StopEsecution} = 0 if(!exists($MS_ConfigHash_ptr->{Errors}->{StopEsecution}));
+   $MS_ConfigHash_ptr->{log_prefix} = '_MSFull_' if(!exists($MS_ConfigHash_ptr->{log_prefix}));
    
-	
+   
 	#Queste conf si trova ne Ticket.xml
 	#my %MS_PMWindConfig = %{ $ConfigObject->Get( 'PM_Wind_settings' )};
 	
@@ -137,6 +145,23 @@ sub MS_LoadAndCheckConfigForWind
       
       #Non forzo la exit qui... lo faro' solo nella gestione dell'errore (modulo MSErrorUtil)
 		#exit(1);
+	}
+   
+   
+   
+   
+	if (%{ $ConfigObject->Get( 'AmbitoTT_PM_Wind' )})
+	{	
+		$MS_ConfigHash_ptr->{AmbitoTT_PM_Wind} = $ConfigObject->Get( 'AmbitoTT_PM_Wind' );
+	
+	}
+	else
+	{
+		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'AmbitoTT_PM_Wind' nel Ticket.xml. Interrompo l'esecuzione.");
+      
+      #setto l'errore che verra' controllato nella subroutine a monte...
+      MS_AssignInternalErrorCode( MS_WhoAmI(), 40, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
+      $MS_ConfigHash_ptr->{Errors}->{StopEsecution} = 1; # "prenoto" una exit
 	}
 
 }

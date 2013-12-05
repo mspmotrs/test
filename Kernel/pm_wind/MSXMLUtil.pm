@@ -6,7 +6,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 # Exporting the saluta routine
-our @EXPORT = qw(MS_XMLCheckParsing);
+our @EXPORT = qw(MS_XMLCheckParsing MS_HashToXMLString);
 # Exporting the saluta2 routine on demand basis.
 #our @EXPORT_OK = qw(saluta2);
 
@@ -104,7 +104,6 @@ sub MS_XMLCheckParsing
     
 
 }
-
 
 
 

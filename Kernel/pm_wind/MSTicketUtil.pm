@@ -6,7 +6,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 # Exporting the saluta routine
-our @EXPORT = qw(MS_TicketGetInfoShort MS_TicketGetWindType MS_TicketGetWindPermission MS_Check_Category MS_CreateAlarm MS_AddArticleToTicket MS_AddAttachmentToArticle);
+our @EXPORT = qw(MS_TicketGetInfoShort MS_TicketGetWindType MS_TicketGetWindPermission MS_Check_Category MS_CreateAlarm MS_AddArticleToTicket MS_AddAttachmentToArticle MS_CheckIfExistsFreshArticleForWind MS_CheckIfAlarmIsOkForCreate MS_CheckIfIncidentOrSrIsOkForCreate);
 # Exporting the saluta2 routine on demand basis.
 #our @EXPORT_OK = qw(saluta2);
 
@@ -23,7 +23,10 @@ use lib "$Bin/../cpan-lib";
 
 
 # ----------------- Moduli custom necessari ------------------
-#use MSErrorUtil;
+use MSErrorUtil;
+use MSConfigUtil;
+
+
 
 
 
@@ -31,7 +34,7 @@ use lib "$Bin/../cpan-lib";
 
 
 ##############################################################################
-#Dato un ticket_id ritorna il queue_id e lo ticket_state_id del ticket corrispondente
+#Dato un ticket_id ritorna tutte le info del ticket corrispondente (tranne le note -> articles)
 #
 #input:
 # - id o tn del tichet di cui estrarre le info
@@ -43,7 +46,7 @@ use lib "$Bin/../cpan-lib";
 # 0 -> KO (il ticket non esiste, oppure errore generico)
 # 1 -> OK (ticket trovato)
 #
-sub MS_TicketGetInfoShort
+sub MS_TicketGetInfo
 {
 	my $ticket_id_or_tn = shift;
 	my $TicketID_is_a_TN = shift; #ad 1 se mi viene passato un TN al posto di un ID
@@ -52,8 +55,9 @@ sub MS_TicketGetInfoShort
 	
 	my $rit = 0; 
 	
-	my $query = 'SELECT id, tn, ticket_state_id, queue_id, type_id FROM ticket WHERE ';
-	if($TicketID_is_a_TN)
+	my $query = 'SELECT id, tn, title, queue_id, ticket_lock_id, ticket_answered, type_id, service_id, sla_id, user_id, responsible_user_id, group_id, ticket_priority_id, ticket_state_id, group_read, group_write, other_read, other_write, customer_id, customer_user_id, timeout, until_time, escalation_time, escalation_update_time, escalation_response_time, escalation_solution_time, freekey1, freetext1, freekey2, freetext2, freekey3, freetext3, freekey4, freetext4, freekey5, freetext5, freekey6, freetext6, freekey7, freetext7, freekey8, freetext8, freekey9, freetext9, freekey10, freetext10, freekey11, freetext11, freekey12, freetext12, freekey13, freetext13, freekey14, freetext14, freekey15, freetext15, freekey16, freetext16, freetime1, freetime2, freetime3, freetime4, freetime5, freetime6, valid_id, create_time_unix, create_time, create_by, change_time, change_by, sr_master_id, sr_assigned_to, vf_acknowledge_date, vf_closing_code, vf_closing_date, vf_error_message, channel, sub_status, product, cq_state, cq_date, msisdn, conto_gioco, codice_fiscale, transaction_id ';
+	$query .= ' FROM ticket WHERE ';
+	if(defined($TicketID_is_a_TN) and $TicketID_is_a_TN == 1)
 	{
 		$query .= "tn = $ticket_id_or_tn";
 	}
@@ -64,7 +68,7 @@ sub MS_TicketGetInfoShort
 	
 
 	#verifica esistenza ticket
-	if($ticket_id_or_tn)
+	if(defined($ticket_id_or_tn) and ((!$TicketID_is_a_TN and $ticket_id_or_tn>0) or ($TicketID_is_a_TN and $ticket_id_or_tn !~ m/^\s*$/)) )
 	{
 		eval 
 		{  
@@ -78,9 +82,94 @@ sub MS_TicketGetInfoShort
 			 {			
 				$TicketHash_ptr->{ID} = $Row[0];
 				$TicketHash_ptr->{TN} = $Row[1];
-				$TicketHash_ptr->{StateID} = $Row[2];
-				$TicketHash_ptr->{QueueID} = $Row[3];
-				$TicketHash_ptr->{TypeID} = $Row[4];
+				
+				$TicketHash_ptr->{StateID} = $Row[13]; #info duplicata con nome diverso (legacy)
+				$TicketHash_ptr->{QueueID} = $Row[3]; #info duplicata con nome diverso (legacy)
+				$TicketHash_ptr->{TypeID} = $Row[6]; #info duplicata con nome diverso (legacy)
+				
+				$TicketHash_ptr->{TITLE} = $Row[2];
+				$TicketHash_ptr->{QUEUE_ID} = $Row[3];
+				$TicketHash_ptr->{TICKET_LOCK_ID} = $Row[4];
+				$TicketHash_ptr->{TICKET_ANSWERED} = $Row[5];
+				$TicketHash_ptr->{TYPE_ID} = $Row[6];
+				$TicketHash_ptr->{SERVICE_ID} = $Row[7];
+				$TicketHash_ptr->{SLA_ID} = $Row[8];
+				$TicketHash_ptr->{USER_ID} = $Row[9];
+				$TicketHash_ptr->{RESPONSIBLE_USER_ID} = $Row[10];
+				$TicketHash_ptr->{GROUP_ID} = $Row[11];
+				$TicketHash_ptr->{TICKET_PRIORITY_ID} = $Row[12];
+				$TicketHash_ptr->{TICKET_STATE_ID} = $Row[13];
+				$TicketHash_ptr->{GROUP_READ} = $Row[14];
+				$TicketHash_ptr->{GROUP_WRITE} = $Row[15];
+				$TicketHash_ptr->{OTHER_READ} = $Row[16];
+				$TicketHash_ptr->{OTHER_WRITE} = $Row[17];
+				$TicketHash_ptr->{CUSTOMER_ID} = $Row[18];
+				$TicketHash_ptr->{CUSTOMER_USER_ID} = $Row[19];
+				$TicketHash_ptr->{TIMEOUT} = $Row[20];
+				$TicketHash_ptr->{UNTIL_TIME} = $Row[21];
+				$TicketHash_ptr->{ESCALATION_TIME} = $Row[22];
+				$TicketHash_ptr->{ESCALATION_UPDATE_TIME} = $Row[23];
+				$TicketHash_ptr->{ESCALATION_RESPONSE_TIME} = $Row[24];
+				$TicketHash_ptr->{ESCALATION_SOLUTION_TIME} = $Row[25];
+				$TicketHash_ptr->{FREEKEY1} = $Row[26];
+				$TicketHash_ptr->{FREETEXT1} = $Row[27];
+				$TicketHash_ptr->{FREEKEY2} = $Row[28];
+				$TicketHash_ptr->{FREETEXT2} = $Row[29];
+				$TicketHash_ptr->{FREEKEY3} = $Row[30];
+				$TicketHash_ptr->{FREETEXT3} = $Row[31];
+				$TicketHash_ptr->{FREEKEY4} = $Row[32];
+				$TicketHash_ptr->{FREETEXT4} = $Row[33];
+				$TicketHash_ptr->{FREEKEY5} = $Row[34];
+				$TicketHash_ptr->{FREETEXT5} = $Row[35];
+				$TicketHash_ptr->{FREEKEY6} = $Row[36];
+				$TicketHash_ptr->{FREETEXT6} = $Row[37];
+				$TicketHash_ptr->{FREEKEY7} = $Row[38];
+				$TicketHash_ptr->{FREETEXT7} = $Row[39];
+				$TicketHash_ptr->{FREEKEY8} = $Row[40];
+				$TicketHash_ptr->{FREETEXT8} = $Row[41];
+				$TicketHash_ptr->{FREEKEY9} = $Row[42];
+				$TicketHash_ptr->{FREETEXT9} = $Row[43];
+				$TicketHash_ptr->{FREEKEY10} = $Row[44];
+				$TicketHash_ptr->{FREETEXT10} = $Row[45];
+				$TicketHash_ptr->{FREEKEY11} = $Row[46];
+				$TicketHash_ptr->{FREETEXT11} = $Row[47];
+				$TicketHash_ptr->{FREEKEY12} = $Row[48];
+				$TicketHash_ptr->{FREETEXT12} = $Row[49];
+				$TicketHash_ptr->{FREEKEY13} = $Row[50];
+				$TicketHash_ptr->{FREETEXT13} = $Row[51];
+				$TicketHash_ptr->{FREEKEY14} = $Row[52];
+				$TicketHash_ptr->{FREETEXT14} = $Row[53];
+				$TicketHash_ptr->{FREEKEY15} = $Row[54];
+				$TicketHash_ptr->{FREETEXT15} = $Row[55];
+				$TicketHash_ptr->{FREEKEY16} = $Row[56];
+				$TicketHash_ptr->{FREETEXT16} = $Row[57];
+				$TicketHash_ptr->{FREETIME1} = $Row[58];
+				$TicketHash_ptr->{FREETIME2} = $Row[59];
+				$TicketHash_ptr->{FREETIME3} = $Row[60];
+				$TicketHash_ptr->{FREETIME4} = $Row[61];
+				$TicketHash_ptr->{FREETIME5} = $Row[62];
+				$TicketHash_ptr->{FREETIME6} = $Row[63];
+				$TicketHash_ptr->{VALID_ID} = $Row[64];
+				$TicketHash_ptr->{CREATE_TIME_UNIX} = $Row[65];
+				$TicketHash_ptr->{CREATE_TIME} = $Row[66];
+				$TicketHash_ptr->{CREATE_BY} = $Row[67];
+				$TicketHash_ptr->{CHANGE_TIME} = $Row[68];
+				$TicketHash_ptr->{CHANGE_BY} = $Row[69];
+				$TicketHash_ptr->{SR_MASTER_ID} = $Row[70];
+				$TicketHash_ptr->{SR_ASSIGNED_TO} = $Row[71];
+				$TicketHash_ptr->{VF_ACKNOWLEDGE_DATE} = $Row[72];
+				$TicketHash_ptr->{VF_CLOSING_CODE} = $Row[73];
+				$TicketHash_ptr->{VF_CLOSING_DATE} = $Row[74];
+				$TicketHash_ptr->{VF_ERROR_MESSAGE} = $Row[75];
+				$TicketHash_ptr->{CHANNEL} = $Row[76];
+				$TicketHash_ptr->{SUB_STATUS} = $Row[77];
+				$TicketHash_ptr->{PRODUCT} = $Row[78];
+				$TicketHash_ptr->{CQ_STATE} = $Row[79];
+				$TicketHash_ptr->{CQ_DATE} = $Row[80];
+				$TicketHash_ptr->{MSISDN} = $Row[81];
+				$TicketHash_ptr->{CONTO_GIOCO} = $Row[82];
+				$TicketHash_ptr->{CODICE_FISCALE} = $Row[83];
+				$TicketHash_ptr->{TRANSACTION_ID} = $Row[84];
 				
 				$rit = 1; #trovato
 			 }
@@ -97,6 +186,30 @@ sub MS_TicketGetInfoShort
 
 	return $rit;
 }
+
+
+
+
+
+
+
+
+##############################################################################
+# Ho deciso di prendere sempre tutte le info (vedi sopra "MS_TicketGetInfo") , questo metodo rimane solo per non riscrivere le chiamate ad esso
+sub MS_TicketGetInfoShort
+{
+	my $ticket_id_or_tn = shift;
+	my $TicketID_is_a_TN = shift; #ad 1 se mi viene passato un TN al posto di un ID
+   my $MS_DBObject_ptr = shift;
+	my $TicketHash_ptr = shift; 
+	
+	return MS_TicketGetInfo($ticket_id_or_tn, $TicketID_is_a_TN, $MS_DBObject_ptr, $TicketHash_ptr);
+}
+
+
+
+
+
 
 
 
@@ -152,9 +265,11 @@ sub MS_TicketGetWindType
 
 		$rit = 1;
 	}
+	else
+	{
+		$TicketHash_ptr->{WindType} = $TicketHash_ptr->{WindTypeUNKNOW};
+	}
 	
-	
-
 	return $rit;
 }
 
@@ -219,6 +334,12 @@ sub MS_TicketGetWindPermission
 
 
 
+
+
+
+
+
+
 ##############################################################################
 # Controlla che una determinata category sia presente nella lista di configurazione
 # Nota: non fa chiamate al DB
@@ -231,24 +352,30 @@ sub MS_TicketGetWindPermission
 # 0 -> KO (la categery passata come parametro NON rientra nella lista conosciuta)
 # 1 -> OK (la category e' in lista)
 #
-sub MS_Check_Category
-{
-	my $category = shift;
-   my $CategoryHash_ptr = shift;
-	
-	my $rit = 0; 
+#sub MS_Check_Category
+#{
+#	my $category = shift;
+#   my $CategoryHash_ptr = shift;
+#	
+#	my $rit = 0; 
+#
+#	foreach my $key (keys( %{$CategoryHash_ptr}))
+#	{
+#		if($category =~ m/^$key$/i )
+#		{
+#			$rit = 1;
+#		}
+#	}	
+#	
+#
+#	return $rit;
+#}
 
-	foreach my $key (keys( %{$CategoryHash_ptr}))
-	{
-		if($category =~ m/^$key$/i )
-		{
-			$rit = 1;
-		}
-	}	
-	
 
-	return $rit;
-}
+
+
+
+
 
 
 
@@ -660,6 +787,631 @@ sub MS_AddAttachmentToArticle
 	$rit = $attachResult if($attachResult > 0);
 
 	return $rit;
+}
+
+
+
+
+
+
+
+
+##############################################################################
+# Richiamata per testare se un certo ALARM possiede almeno una nota per Wind.
+# Al momento, nel caso degli ALARM, "valida per Wind" vuol dire semplicmente esistente.
+# Se trova piu' di una nota valida per quel ticket considera SOLO la piu' recente
+#
+# Output:
+#   -1  -> l'ALARM non possiede note valide per Wind - oppure - errore generico
+#   numero > 0  -> e' l' articleID che indica la nota valida per Wind
+#
+sub MS_GetValidArticleIdForAlarm
+{
+	my $articleID = shift;
+   my $MS_DBObject_ptr = shift;
+
+	my $rit = -1;
+	
+	if (defined($articleID) and ($articleID !~ m/^\s*$/) and ($articleID > 0) and defined($MS_DBObject_ptr) )
+	{
+		my $query = 'SELECT MAX(id) as id ';
+		$query .= ' FROM article ';
+		$query .= " WHERE ticket_id=$articleID ";
+		
+		eval 
+		{  
+			$MS_DBObject_ptr->Prepare(
+				  SQL   => $query,
+				  Limit => 1
+			 );
+			 my @Row = $MS_DBObject_ptr->FetchrowArray();
+			 
+			 if (scalar(@Row) and $Row[0] > 0)
+			 {			
+				$rit = $Row[0];
+			 }
+		};
+		if($@)
+		{
+			#gestione errore
+			$rit = -1;
+		}
+	}
+	
+	return $rit;
+}
+
+
+
+
+
+##############################################################################
+#Dato un article_id ritorna tutte le info dell'article corrispondente (tranne gli allegati)
+#
+#input:
+# - id di cui estrarre le info
+# - ptr a "DBObject" di OTRS
+# - ptr a struttura di tipo HASH da popolare con le info
+#
+#output:
+# 0 -> KO (article non esiste, oppure errore generico)
+# 1 -> OK (article trovato)
+#
+sub MS_ArticleGetInfo
+{
+	my $articleID = shift;
+   my $MS_DBObject_ptr = shift;
+	my $ArticleHash_ptr = shift;
+
+	my $rit = 0;
+	
+	if (defined($articleID) and ($articleID !~ m/^\s*$/) and ($articleID > 0) and defined($MS_DBObject_ptr) and defined($ArticleHash_ptr) )
+	{
+		my $query = 'SELECT id, ticket_id, article_type_id, article_sender_type_id, a_from, a_reply_to, a_to, a_cc, a_subject, a_message_id, a_in_reply_to, a_references, a_content_type, a_body, incoming_time, content_path, a_freekey1, a_freetext1, a_freekey2, a_freetext2, a_freekey3, a_freetext3, valid_id, create_time, create_by, change_time, change_by, note_row_id ';
+		$query .= ' FROM article ';
+		$query .= " WHERE id=$articleID ";
+
+		eval 
+		{  
+			$MS_DBObject_ptr->Prepare(
+				  SQL   => $query,
+				  Limit => 1
+			);
+			my @Row = $MS_DBObject_ptr->FetchrowArray();
+			 
+			if (scalar(@Row))
+			{			
+				$ArticleHash_ptr->{ID} = $Row[0];
+				$ArticleHash_ptr->{TICKET_ID} = $Row[1];
+				$ArticleHash_ptr->{ARTICLE_TYPE_ID} = $Row[2];
+				$ArticleHash_ptr->{ARTICLE_SENDER_TYPE_ID} = $Row[3];
+				$ArticleHash_ptr->{A_FROM} = $Row[4];
+				$ArticleHash_ptr->{A_REPLY_TO} = $Row[5];
+				$ArticleHash_ptr->{A_TO} = $Row[6];
+				$ArticleHash_ptr->{A_CC} = $Row[7];
+				$ArticleHash_ptr->{A_SUBJECT} = $Row[8];
+				$ArticleHash_ptr->{A_MESSAGE_ID} = $Row[9];
+				$ArticleHash_ptr->{A_IN_REPLY_TO} = $Row[10];
+				$ArticleHash_ptr->{A_REFERENCES} = $Row[11];
+				$ArticleHash_ptr->{A_CONTENT_TYPE} = $Row[12];
+				$ArticleHash_ptr->{A_BODY} = $Row[13];
+				$ArticleHash_ptr->{INCOMING_TIME} = $Row[14];
+				$ArticleHash_ptr->{CONTENT_PATH} = $Row[15];
+				$ArticleHash_ptr->{A_FREEKEY1} = $Row[16];
+				$ArticleHash_ptr->{A_FREETEXT1} = $Row[17];
+				$ArticleHash_ptr->{A_FREEKEY2} = $Row[18];
+				$ArticleHash_ptr->{A_FREETEXT2} = $Row[19];
+				$ArticleHash_ptr->{A_FREEKEY3} = $Row[20];
+				$ArticleHash_ptr->{A_FREETEXT3} = $Row[21];
+				$ArticleHash_ptr->{VALID_ID} = $Row[22];
+				$ArticleHash_ptr->{CREATE_TIME} = $Row[23];
+				$ArticleHash_ptr->{CREATE_BY} = $Row[24];
+				$ArticleHash_ptr->{CHANGE_TIME} = $Row[25];
+				$ArticleHash_ptr->{CHANGE_BY} = $Row[26];
+				$ArticleHash_ptr->{NOTE_ROW_ID} = $Row[27];
+
+				$rit = 1; #trovato
+			}
+		};
+		if($@)
+		{
+			#gestione errore
+			$rit = 0;
+		}
+		
+
+	}
+	
+	return $rit;
+}
+
+
+
+
+
+
+
+##############################################################################
+#Dato un article_id ritorna una struttura che contiene gli allegati 
+#
+#input:
+# - id dell'article da cui estrarre gli allegati
+# - ptr a "TicketObject" di OTRS
+# - ptr a struttura di tipo HASH da popolare con le info
+#
+#output:
+# 0 -> KO (non esistono allegato per questo article, oppure errore generico)
+# num > 0 -> OK (numero degli allegati trovati)
+#
+sub MS_GetArticleAttachments
+{
+	my $articleID = shift;
+   my $MS_TicketObject_ptr = shift;
+	my $AttachmentsHashContainer_ptr = shift;
+
+	my $rit = 0;
+	
+	if (defined($articleID) and ($articleID !~ m/^\s*$/) and ($articleID > 0) and defined($MS_TicketObject_ptr) and defined($AttachmentsHashContainer_ptr) )
+	{
+
+
+		eval 
+		{  
+			#get article attachment index as hash (ID => hashref (Filename, Filesize, ContentID (if exists), ContentAlternative(if exists) )) 
+			my %IndexOfAttachments = $MS_TicketObject_ptr->ArticleAttachmentIndex(
+				 ArticleID => $articleID,
+				 #UserID    => 123,
+			);
+
+			
+			## --- Allegati ---
+			#AttachedFiles => [
+			#							{                           A T T E N Z I O N E
+			#								FullFileName => '',   ----> qui ---> Filename
+			#								TypeFile => '',       ----> qui ---> ContentType
+			#								dataCreazione => '',  ----> qui ---> <mancante>
+			#								FileBody => '',       ----> qui ---> Content
+			#							},
+			#
+			#							{
+			#								FullFileName => '',
+			#								TypeFile => '',
+			#								dataCreazione => '',
+			#								FileBody => '',
+			#							},
+			#						],
+			#
+			
+			
+			$AttachmentsHashContainer_ptr->{AttachedFiles} = [];
+			
+			my $count = 0;
+			foreach my $key (keys(%IndexOfAttachments))
+			{
+				
+				#get article attachment (Content, ContentType, Filename and optional ContentID, ContentAlternative) 
+				%{$AttachmentsHashContainer_ptr->{AttachedFiles}->[$count]} = $MS_TicketObject_ptr->ArticleAttachment(
+					 ArticleID => $articleID,
+					 FileID    => $key,
+					 #UserID    => 123,
+				);
+				
+				#lo aggiungo ma non dovrebbe servire...
+				$AttachmentsHashContainer_ptr->{AttachedFiles}->[$count]->{Filesize} = $IndexOfAttachments{$key}->{Filesize};
+				
+				$count++;
+			}
+			
+			$rit = $count;
+		};
+		if($@)
+		{
+			#gestione errore
+			$rit = 0;
+		}
+		
+
+	}
+	
+	return $rit;
+}
+
+
+
+
+
+#---------------------------------------------------------------------------------
+
+
+
+
+##############################################################################
+# Spacchetta i campi del ticket che sul DB vengono concatenati, mentre ad interfaccia
+# sono mostrati singolarmente (spacchettati)
+#
+#input:
+# - HashTicket_ptr  (puntatore all'hash costruito con la "MS_TicketGetInfo" e che rappresenta il ticket)
+#       a questo hash verranno aggiunti i campi anche in forma spacchettata: keys con prefisso "WIND_"
+# 
+#output:
+# 0 -> se errore o nell'hash non sono presenti tutte le info che andrebbero spacchettate
+# 1 -> se ok
+#
+#interfaccia:   MS_SplitMergedFields(\%HashTicket)
+#
+sub MS_SplitMergedFields
+{
+	my $TicketHash_ptr = shift;
+
+	my $rit = 0;
+	
+	if(exists($TicketHash_ptr->{FREETEXT2}) and exists($TicketHash_ptr->{FREETEXT3}) and exists($TicketHash_ptr->{FREETEXT10}) and exists($TicketHash_ptr->{FREETEXT11}))
+	{
+		# FREETEXT2 -> MSISDN | ID LINEA
+		my @MS_campi2 = split(/|/, $TicketHash_ptr->{FREETEXT2});
+		$TicketHash_ptr->{WIND_MSISDN} = $MS_campi2[0];
+		$TicketHash_ptr->{WIND_ID_LINEA} = $MS_campi2[1];
+		if (scalar(@MS_campi2) < 2) #1 oppure 0
+		{
+			$TicketHash_ptr->{WIND_FREETEXT2_SPLITTED} = 0; #non c'era niente da dividere
+		}
+		else
+		{
+			$TicketHash_ptr->{WIND_FREETEXT2_SPLITTED} = 1;
+		}
+		
+		 
+		
+		# FREETEXT3 -> IMSI | ICCID | IMEI
+		my @MS_campi3 = split(/|/, $TicketHash_ptr->{FREETEXT3});
+		$TicketHash_ptr->{WIND_IMSI} = $MS_campi3[0];
+		$TicketHash_ptr->{WIND_ICCID} = $MS_campi3[1];
+		$TicketHash_ptr->{WIND_IMEI} = $MS_campi3[2];
+		if (scalar(@MS_campi3) < 2) #1 oppure 0
+		{
+			$TicketHash_ptr->{WIND_FREETEXT3_SPLITTED} = 0; #non c'era niente da dividere
+		}
+		else
+		{
+			$TicketHash_ptr->{WIND_FREETEXT3_SPLITTED} = 1;
+		}
+		
+		
+		
+		# FREETEXT10 -> AMBITO TT | TIPO LINEA | MNP TYPE
+		my @MS_campi10 = split(/|/, $TicketHash_ptr->{FREETEXT10});
+		$TicketHash_ptr->{WIND_AMBITOTT} = $MS_campi10[0];
+		$TicketHash_ptr->{WIND_TIPO_LINEA} = $MS_campi10[1];
+		$TicketHash_ptr->{WIND_MNP_TYPE} = $MS_campi10[2];
+		if (scalar(@MS_campi10) < 2) #1 oppure 0
+		{
+			$TicketHash_ptr->{WIND_FREETEXT10_SPLITTED} = 0; #non c'era niente da dividere
+		}
+		else
+		{
+			$TicketHash_ptr->{WIND_FREETEXT10_SPLITTED} = 1;
+		}
+		
+		
+		
+		# FREETEXT11 -> Indirizzo | Provincia | Comune | CAP
+		my @MS_campi11 = split(/|/, $TicketHash_ptr->{FREETEXT11});
+		$TicketHash_ptr->{WIND_Indirizzo} = $MS_campi11[0];
+		$TicketHash_ptr->{WIND_Provincia} = $MS_campi11[1];
+		$TicketHash_ptr->{WIND_Comune} = $MS_campi11[2];
+		$TicketHash_ptr->{WIND_CAP} = $MS_campi11[3];
+		if (scalar(@MS_campi11) < 2) #1 oppure 0
+		{
+			$TicketHash_ptr->{WIND_FREETEXT11_SPLITTED} = 0; #non c'era niente da dividere
+		}
+		else
+		{
+			$TicketHash_ptr->{WIND_FREETEXT11_SPLITTED} = 1;
+		}
+		
+		
+		
+		
+		$rit = 1;
+	}
+
+	return $rit;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+# Richiamata per testare se un certo ticket possiede almeno una nota per Wind creata
+# all'interno dell'intervallo di validita' (vedi configurazioni e docs).
+# Se trova piu' di una nota valida per quel ticket considera SOLO la piu' recente
+#
+# Output:
+#   -1  -> il ticket non posside note valide per Wind - oppure - errore generico
+#   numero > 0  -> e' l' articleID che indica la nota valida per Wind
+#
+#interfaccia:   MS_CheckIfExistsFreshArticleForWind
+#
+sub MS_CheckIfExistsFreshArticleForWind
+{
+	my $TicketID = shift;
+   my $MS_DBObject_ptr = shift;
+	my $TicketHash_ptr = shift; # opzionale
+		
+	my $rit = -1;
+	
+	my $MS_ConfigObject_ptr = $MS_DBObject_ptr->{ConfigObject};
+	my $MS_LogObject_ptr = $MS_DBObject_ptr->{LogObject};
+	
+	$TicketHash_ptr = {} if(!defined($TicketHash_ptr));
+
+	#Controllo la configurazione specifica...
+	if(!exists($TicketHash_ptr->{PM_Wind_settings}->{article_typeID_ToWind}))
+	{
+		MS_LoadAndCheckConfigForWind($TicketHash_ptr, $MS_ConfigObject_ptr);
+	}
+	
+	#Tipo di nota
+	my $article_typeID_ToWind = $TicketHash_ptr->{PM_Wind_settings}->{article_typeID_ToWind};
+	
+	#Vincolo temporale (intervallo di validita' della nota per Wind)
+	my $article_validityTime_ToWind = $TicketHash_ptr->{PM_Wind_settings}->{article_validityTime_ToWind};
+	my $firstValidTime = time() - $article_validityTime_ToWind; #la validita' inizia da questo tempo e finisce all'istante attuale
+	
+	
+	#my $query = 'SELECT id, ticket_id, article_type_id, article_sender_type_id, a_from, a_reply_to, a_to, a_cc, a_subject, a_message_id, a_in_reply_to, a_references, a_content_type, a_body, incoming_time, content_path, a_freekey1, a_freetext1, a_freekey2, a_freetext2, a_freekey3, a_freetext3, valid_id, create_time, create_by, change_time, change_by, note_row_id ';
+	my $query = 'SELECT MAX(id) as id ';
+	$query .= ' FROM article ';
+	$query .= " WHERE ticket_id=$TicketID and article_type_id=$article_typeID_ToWind and incoming_time >= $firstValidTime ";
+	
+	eval 
+	{  
+		$MS_DBObject_ptr->Prepare(
+			  SQL   => $query,
+			  Limit => 1
+		 );
+		 my @Row = $MS_DBObject_ptr->FetchrowArray();
+		 
+		 if (scalar(@Row))
+		 {			
+			$rit = $Row[0];
+		 }
+		 else
+		 {
+			$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [WARNING] Per il ticket $TicketID non esistono note per Wind all'interno dell'intervallo di validita' (now - $article_validityTime_ToWind secs)");					
+		 }
+	};
+	if($@)
+	{
+		#gestione errore
+		$rit = -1;
+	}
+	
+	
+		
+	return $rit;
+}
+
+
+
+
+
+
+
+
+
+##############################################################################
+# Richiamata per testare se quando si cerca di aprire un Alarm/Incident/SR verso Wind esso e'
+# corredato di tutte le info necessarie.
+#
+#input:
+# - tipo -> ALARM oppure INCIDENT/SR (identifica la tipologia di ticket che si vuole aprire verso Wind) - impostato dalla funzione chiamante
+# - id o tn del tichet di cui testare la correttezza
+# - flag che mi dice se mi viene passato un id o un tn
+# - ptr a "DBObject" di OTRS
+# - ptr a struttura di tipo HASH da popolare con le info  (OPZIONALE)
+# 
+#output:
+# 0 -> NON sono presenti tutte le info necessarie
+# 1 -> se ok
+#
+#interfaccia:   _MS_CheckIfOkForCreate(.....)
+#
+sub _MS_CheckIfOkForCreate
+{
+	my $TIPO = shift;
+	my $ticket_id_or_tn = shift;
+	my $TicketID_is_a_TN = shift; #ad 1 se mi viene passato un TN al posto di un ID
+   my $MS_DBObject_ptr = shift;
+	my $TicketHash_ptr = shift; # opzionale
+		
+	my $rit = 0;
+	
+	if( (!defined($TIPO) or $TIPO ne 'ALARM' or $TIPO ne 'INCIDENT/SR') or !defined($ticket_id_or_tn) or !defined($TicketID_is_a_TN) or !defined($MS_DBObject_ptr) )
+	{
+		return $rit; 
+	}
+	
+	my $isAlarm = 0; #a = indica che si tratta di un INCIDENT/SR, ad 1 che si tratta di un ALARM
+	$isAlarm = 1 if($TIPO eq 'ALARM');
+	
+	
+	my $MS_ConfigObject_ptr = $MS_DBObject_ptr->{ConfigObject};
+	my $MS_LogObject_ptr = $MS_DBObject_ptr->{LogObject};
+	
+	$TicketHash_ptr = {} if(!defined($TicketHash_ptr));
+	my $result = MS_TicketGetInfo($ticket_id_or_tn, $TicketID_is_a_TN, $MS_DBObject_ptr, $TicketHash_ptr);
+	
+	if ($result) #1 -> OK (ticket trovato)
+	{
+		$result = MS_SplitMergedFields($TicketHash_ptr);
+		
+		if ($result)
+		{
+			#Controllo la configurazione specifica...
+			if(!exists($TicketHash_ptr->{PM_Wind_settings}))
+			{
+				MS_LoadAndCheckConfigForWind($TicketHash_ptr, $MS_ConfigObject_ptr);
+			}
+			
+			#Controllo eventuali errori e mi comporto di conseguenza
+			if ($TicketHash_ptr->{Errors}->{InternalCode} == 0)
+			{
+				if( ($isAlarm and exists($TicketHash_ptr->{Category_Alarm_PM_Wind}->{$TicketHash_ptr->{FREETEXT15}}))
+						or
+						(!$isAlarm and exists($TicketHash_ptr->{Category_Incident_PM_Wind}->{$TicketHash_ptr->{FREETEXT15}}))
+					)
+				{
+					if (!$isAlarm or ($isAlarm and $TicketHash_ptr->{TYPE_ID} == $TicketHash_ptr->{PM_Wind_settings}->{ticketTypeID_AlarmToWind}) )
+					{
+						if ($TicketHash_ptr->{WIND_FREETEXT10_SPLITTED}	and exists($TicketHash_ptr->{AmbitoTT_PM_Wind}->{$TicketHash_ptr->{WIND_AMBITOTT}}))
+						{
+							if (!$isAlarm)
+							{
+								#solo per INCIDENT/SR controllo la presenza di una nota valida per Wind
+								
+								#   -1  -> il ticket non posside note valide per Wind - oppure - errore generico
+								#   numero > 0  -> e' l' articleID che indica la nota valida per Wind
+								my $checkNotaPerWind = MS_CheckIfExistsFreshArticleForWind($TicketHash_ptr->{ID}, $MS_DBObject_ptr, $TicketHash_ptr);
+								$TicketHash_ptr->{WIND_VALID_ARTICLE_ID} = $checkNotaPerWind; #utile per operazioni a monte, nella sub chiamante
+								if ($checkNotaPerWind > 0)
+								{
+									$rit = 1; #per gli ALARM ho finito i controlli (tutto ok)
+									#$TicketHash_ptr->{WIND_VALID_ARTICLE_ID} = $checkNotaPerWind;
+								}
+								
+								#in caso di errori il log viene gia' fatto dalla MS_CheckIfExistsFreshArticleForWind..
+							}
+							else
+							{
+								my $articleId = MS_GetValidArticleIdForAlarm($TicketHash_ptr->{ID}, $MS_DBObject_ptr);
+								$TicketHash_ptr->{WIND_VALID_ARTICLE_ID} = $articleId; #utile per operazioni a monte, nella sub chiamante
+								
+								$rit = 1; #per gli ALARM ho finito i controlli (tutto ok)
+							}
+						}
+						else
+						{
+							$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] L' ambito '$TicketHash_ptr->{WIND_AMBITOTT}' non rientra tra quelli previsti in ambito full PM -> Wind (vedi Ticket.xml).");					
+						}
+					}
+					else
+					{
+						$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] Il type_ID ($TicketHash_ptr->{TYPE_ID}) del ticket non  del tipo Alarm per Wind ($TicketHash_ptr->{PM_Wind_settings}->{ticketTypeID_AlarmToWind}).");					
+					}			
+				}
+				else
+				{
+					if ($isAlarm)
+					{
+						$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] La category '$TicketHash_ptr->{FREETEXT15}' non rientra tra quelle previste per gli Alarm PM -> Wind (vedi Ticket.xml).");	
+					}
+					else
+					{
+						$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] La category '$TicketHash_ptr->{FREETEXT15}' non rientra tra quelle previste per gli Incident/SR PM -> Wind (vedi Ticket.xml).");	
+					}
+					
+				
+				}
+			}
+			else
+			{
+				$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] La configurazione per il Full nel Ticket.xml non sembra corretta.");				
+			}		
+		}
+		
+	}
+	
+	
+
+	return $rit;
+}
+
+
+
+
+
+
+
+
+##############################################################################
+# Richiamata per testare se quando si cerca di aprire un Alarm verso Wind esso e'
+# corredato di tutte le info necessarie.
+#
+#input:
+# - id o tn del tichet di cui testare la correttezza
+# - flag che mi dice se mi viene passato un id o un tn
+# - ptr a "DBObject" di OTRS
+# - ptr a struttura di tipo HASH da popolare con le info  (OPZIONALE)
+# 
+#output:
+# 0 -> NON sono presenti tutte le info necessarie
+# 1 -> se ok
+#
+#interfaccia:   MS_CheckIfAlarmIsOkForCreate(....)
+#
+sub MS_CheckIfAlarmIsOkForCreate
+{
+	my $ticket_id_or_tn = shift;
+	my $TicketID_is_a_TN = shift; #ad 1 se mi viene passato un TN al posto di un ID
+   my $MS_DBObject_ptr = shift;
+	my $TicketHash_ptr = shift; # opzionale
+	
+	return _MS_CheckIfOkForCreate('ALARM', $ticket_id_or_tn, $TicketID_is_a_TN, $MS_DBObject_ptr, $TicketHash_ptr);
+}
+
+
+
+
+
+
+
+##############################################################################
+# Richiamata per testare se quando si cerca di aprire un Incident verso Wind esso e'
+# corredato di tutte le info necessarie.
+#
+#input:
+# - id o tn del tichet di cui testare la correttezza
+# - flag che mi dice se mi viene passato un id o un tn
+# - ptr a "DBObject" di OTRS
+# - ptr a struttura di tipo HASH da popolare con le info  (OPZIONALE)
+# 
+#output:
+# 0 -> NON sono presenti tutte le info necessarie
+# 1 -> se ok
+#
+#interfaccia:   MS_CheckIfIncidentOrSrIsOkForCreate(...)
+#
+sub MS_CheckIfIncidentOrSrIsOkForCreate
+{
+	my $ticket_id_or_tn = shift;
+	my $TicketID_is_a_TN = shift; #ad 1 se mi viene passato un TN al posto di un ID
+   my $MS_DBObject_ptr = shift;
+	my $TicketHash_ptr = shift; # opzionale
+	
+	return _MS_CheckIfOkForCreate('INCIDENT/SR', $ticket_id_or_tn, $TicketID_is_a_TN, $MS_DBObject_ptr, $TicketHash_ptr);
 }
 
 
