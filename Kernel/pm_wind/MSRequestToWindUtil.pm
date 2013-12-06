@@ -463,13 +463,13 @@ sub MS_RequestSend
 			if ($response->is_success)
 			{
 				$TicketHash_ptr->{ResponseHash}->{ResponseContent} = $response->decoded_content;
-				$TicketHash_ptr->{ResponseHash}->{ResponseError} = 0; 
+				$TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} = 0; 
 				$TicketHash_ptr->{ResponseHash}->{ResponseErrorMessage} = '';
 				$rit = 1;
 			}
 			else
 			{
-				$TicketHash_ptr->{ResponseHash}->{ResponseError} = 1; 
+				$TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} = 1; 
 				$TicketHash_ptr->{ResponseHash}->{ResponseErrorMessage} = $response->status_line;
 			}
 		};
@@ -489,9 +489,120 @@ sub MS_RequestSend
 
 
 
+# 0 => errore   .... 1 => ok
+sub _MS_RequestBuildAndSend_HANDLER
+{
+	my $MSinput = shift;
+	
+	#my $ticketID = $MSinput->{ticketID};
+	my $MS_TicketObject_ptr = $MSinput->{MS_TicketObject_ptr};
+	my $RequestType = $MSinput->{RequestType}; #CREATE, UPDATE, NOTIFY
+	#my $WindTicketType = $MSinput->{WindTicketType};#INCIDENT, ALARM
+	my $TicketHash_ptr = $MSinput->{TicketHash_ptr};
+	my $OTRS_XMLObject_ptr = $MSinput->{OTRS_XMLObject_ptr}; #opzionale
+	
+	my $rit = 0;
+	
+	my $MS_LogObject_ptr = $MS_TicketObject_ptr->{LogObject};
+	my $result = MS_RequestHashToXMLString($TicketHash_ptr->{RequestHash});
+	
+	if ($result)
+	{
+		$result = MS_RequestSend($TicketHash_ptr);
+		if ($result)
+		{
+			if(exists($TicketHash_ptr->{ResponseHash}->{ResponseContent}))
+			{
+				$TicketHash_ptr->{Errors} = {};
+				$TicketHash_ptr->{Errors}->{StopEsecution} = 0;
+				$TicketHash_ptr->{Errors}->{InternalCode} = 0;
+				$TicketHash_ptr->{Errors}->{InternalDescr} = '';
+				
+				if (defined($OTRS_XMLObject_ptr))
+				{
+					$TicketHash_ptr->{OTRS_XMLObject} = $OTRS_XMLObject_ptr;
+				}
+				else
+				{
+					eval 
+					{  
+						$TicketHash_ptr->{OTRS_XMLObject} = Kernel::System::XML->new(
+																					ConfigObject => $MS_TicketObject_ptr->{ConfigObject},
+																					LogObject    => $MS_TicketObject_ptr->{LogObject},
+																					DBObject     => $MS_TicketObject_ptr->{DBObject},
+																					MainObject   => $MS_TicketObject_ptr->{MainObject},
+																					EncodeObject => $MS_TicketObject_ptr->{EncodeObject},
+																			  );
+					};
+					if($@)
+					{
+						#gestione errore
+						#gestione errore
+						$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] Errore interno durante la creazione di un oggetto di tipo Kernel::System::XML (OTRS_XMLObject) \n");	
+						$rit = 0;
+					}
+
+				}
+				
+				
+				$TicketHash_ptr->{OTRS_LogObject} = $MS_TicketObject_ptr->{LogObject};
+
+
+				#proviamo a fare il parsing
+				my $XMLHash_ptr = MS_XMLCheckParsing($TicketHash_ptr, $TicketHash_ptr->{ResponseHash}->{ResponseContent});
+				
+				#se le cose tornano...
+				if ( defined($XMLHash_ptr) and (ref $XMLHash_ptr eq 'ARRAY')  )
+				{
+					MS_ResponseToResponseHash($TicketHash_ptr, $XMLHash_ptr) ;
+					
+					# 0 => KO.... 1 => OK
+					my $response_result = MS_CheckResponseFromWind($TicketHash_ptr, $RequestType);
+					if ($response_result) #risposta FORMALMENTE corretta
+					{
+						if (!exists($TicketHash_ptr->{ResponseHash}->{ResponseErrorCode}) or (exists($TicketHash_ptr->{ResponseHash}->{ResponseErrorCode}) and $TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} == 0) )
+						{
+							#non ci sono errori da segnalare
+							$rit = 1;
+						}
+						else
+						{
+							#Wind mi ha inviato un errore..
+						$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] La Response arrivata da Wind/EAI mi segnala errore: ResponseErrorCode = $TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} - ResponseErrorMessage = $TicketHash_ptr->{ResponseHash}->{ResponseErrorMessage} \n");	
+							$rit = 0;
+						}
+						
+					}
+					else
+					{
+						#gestione errore
+						$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] La Response arrivata da Wind/EAI ha qualche problema: ResponseErrorCode = $TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} - ResponseErrorMessage = $TicketHash_ptr->{ResponseHash}->{ResponseErrorMessage} \n");	
+						$rit = 0;
+					}
+					
+				}
+				else
+				{
+					$TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} = 1;
+					$TicketHash_ptr->{ResponseHash}->{ResponseErrorMessage} = 'Response malformata';
+					
+					#gestione errore
+					$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] La Response arrivata da Wind/EAI sembra malformata: ResponseErrorCode = $TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} - ResponseErrorMessage = $TicketHash_ptr->{ResponseHash}->{ResponseErrorMessage} \n");	
+					$rit = 0;
+				}
+			}						
+		}
+	}
+	
+	return $rit;				
+}
 
 
 
+
+
+
+# 0 => errore .... 1 => OK
 sub MS_RequestBuildAndSend
 {
 	my $ticketID = shift;
@@ -515,6 +626,8 @@ sub MS_RequestBuildAndSend
 	}
 	
 	
+	my $result = 0;
+	
 	my $MS_LogObject_ptr = $MS_TicketObject_ptr->{LogObject};
 	my $TicketHash_ptr = {};
 	
@@ -522,65 +635,7 @@ sub MS_RequestBuildAndSend
 	{
 		if ($RequestType =~ m/^CREATE$/i) #unico possibile per gli Incident/SR
 		{
-			
-			my $result = MS_RequestBuild_Create_Incident($ticketID, 0, $MS_TicketObject_ptr, $TicketHash_ptr);
-			if ($result)
-			{
-				$result = MS_RequestHashToXMLString($TicketHash_ptr->{RequestHash});
-				if ($result)
-				{
-					$result = MS_RequestSend($TicketHash_ptr);
-					if ($result)
-					{
-						if(exists($TicketHash_ptr->{ResponseHash}->{ResponseContent}))
-						{
-							$TicketHash_ptr->{Errors} = {};
-							$TicketHash_ptr->{Errors}->{StopEsecution} = 0;
-							$TicketHash_ptr->{Errors}->{InternalCode} = 0;
-							$TicketHash_ptr->{Errors}->{InternalDescr} = '';
-							
-							if (defined($OTRS_XMLObject_ptr))
-							{
-								$TicketHash_ptr->{OTRS_XMLObject} = $OTRS_XMLObject_ptr;
-							}
-							else
-							{
-								$TicketHash_ptr->{OTRS_XMLObject} = Kernel::System::XML->new(
-																							ConfigObject => $MS_TicketObject_ptr->{ConfigObject},
-																							LogObject    => $MS_TicketObject_ptr->{LogObject},
-																							DBObject     => $MS_TicketObject_ptr->{DBObject},
-																							MainObject   => $MS_TicketObject_ptr->{MainObject},
-																							EncodeObject => $MS_TicketObject_ptr->{EncodeObject},
-																					  );
-							}
-							
-							
-							$TicketHash_ptr->{OTRS_LogObject} = $MS_TicketObject_ptr->{LogObject};
-
-
-							#proviamo a fare il parsing
-							my $XMLHash_ptr = MS_XMLCheckParsing($TicketHash_ptr, $TicketHash_ptr->{ResponseHash}->{ResponseContent});
-							
-							#se le cose tornano...
-							if ( defined($XMLHash_ptr) and (ref $XMLHash_ptr eq 'ARRAY')  )
-							{
-								MS_ResponseToResponseHash($TicketHash_ptr, $XMLHash_ptr) ;	
-							}
-							else
-							{
-								$MS_ConfigHash_ptr->{RequestHash}->{RequestErrorCode} = 290;
-								$MS_ConfigHash_ptr->{RequestHash}->{RequestErrorDescr} = "Request malformata";
-							}
-							
-								
-						}						
-					}
-				}
-				
-			}
-			
-	
-			$rit = 1;
+			$result = MS_RequestBuild_Create_Incident($ticketID, 0, $MS_TicketObject_ptr, $TicketHash_ptr);
 		}
 		else
 		{
@@ -592,20 +647,15 @@ sub MS_RequestBuildAndSend
 	{
 		if ($RequestType =~ m/^CREATE$/i) #unico possibile per gli Incident/SR
 		{
-			
-			
-			$rit = 1;
+			$result = MS_RequestBuild_Create_Alarm($ticketID, 0, $MS_TicketObject_ptr, $TicketHash_ptr);
 		}
 		elsif ($RequestType =~ m/^UPDATE$/i) #unico possibile per gli Incident/SR
 		{
-			
-			
-			$rit = 1;
+			$result = MS_RequestBuild_Update_Alarm($ticketID, 0, $MS_TicketObject_ptr, $TicketHash_ptr);
 		}
 		elsif ($RequestType =~ m/^NOTIFY$/i) #unico possibile per gli Incident/SR
 		{
-			
-			$rit = 1;
+			$result = MS_RequestBuild_Notify_Alarm($ticketID, 0, $MS_TicketObject_ptr, $TicketHash_ptr);
 		}
 		else
 		{
@@ -613,11 +663,46 @@ sub MS_RequestBuildAndSend
 		}
 	}
 	
-	
-#	my $ticket_id_or_tn = shift;
-#	my $TicketID_is_a_TN = shift; #ad 1 se mi viene passato un TN al posto di un ID
-#  my $MS_TicketObject_ptr = shift;
-#	my $TicketHash_ptr = shift; # opzionale
+
+
+	if ($result)
+	{
+		$result = _MS_RequestBuildAndSend_HANDLER( {
+						MS_TicketObject_ptr => $MS_TicketObject_ptr,
+						RequestType => $RequestType,
+						TicketHash_ptr => $TicketHash_ptr,
+						OTRS_XMLObject_ptr => $OTRS_XMLObject_ptr,
+						});
+		
+		if ($result)
+		{
+			#tutto ok
+			$rit = 1;
+		}
+		else
+		{
+			#lod dell'errore gia' gestito nella _MS_RequestBuildAndSend_HANDLER
+			$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] Errore durante il processo di invio Request e validazione Reasponse: ticketID=$ticketID, RequestType=$RequestType, WindTicketType=$WindTicketType");	
+		}
+		
+	}
+	else
+	{
+		$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] Errore durante la creazione di una Request: ticketID=$ticketID, RequestType=$RequestType, WindTicketType=$WindTicketType");	
+	}
+
+
+
+	if (exists($TicketHash_ptr->{PM_Wind_settings}->{log_level}) and $TicketHash_ptr->{PM_Wind_settings}->{log_level} > 2)
+	{
+		$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [INFO] TicketHash_ptr =\n".Data::Dumper($TicketHash_ptr)."\n");	
+	}
+	elsif (exists($TicketHash_ptr->{PM_Wind_settings}->{log_level}) and $TicketHash_ptr->{PM_Wind_settings}->{log_level} > 1)
+	{
+		$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [INFO] Request=\n".Data::Dumper($TicketHash_ptr->{RequestHash}->{RequestContent})."\n") if(exists($TicketHash_ptr->{RequestHash}->{RequestContent}));
+		
+		$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [INFO] Response=\n".Data::Dumper($TicketHash_ptr->{ResponseHash}->{ResponseContent})."\n") if(exists($TicketHash_ptr->{ResponseHash}->{ResponseContent}));	
+	}
 	
 	
 	return $rit;

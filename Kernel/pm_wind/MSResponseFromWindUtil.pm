@@ -84,9 +84,93 @@ sub MS_ResponseToResponseHash
 
 
 
+
+
 sub MS_CheckResponseFromWind
 {
+	my $TicketHash_ptr = shift;
+	my $RequestType = shift; #CREATE, UPDATE, NOTIFY
 	
+	my $rit = 0;
+	
+	my $ResponseHash_ptr = $TicketHash_ptr->{ResponseHash};
+	
+	if (defined($TicketHash_ptr) and exists($ResponseHash_ptr->{Header}) and exists($ResponseHash_ptr->{ResultStatus}) )
+	{
+		my $TransactionId = $TicketHash_ptr->{RequestHash}->{HEADER}->{TransactionId};
+		
+		if (exists($ResponseHash_ptr->{Header}->{TransactionId}) and $TransactionId eq $ResponseHash_ptr->{Header}->{TransactionId})
+		{
+			if (exists($ResponseHash_ptr->{ResultStatus}->{StatusCode}) )
+			{
+				if ($ResponseHash_ptr->{ResultStatus}->{StatusCode} == 0 )
+				{
+					if ($RequestType =~ m/^CREATE$/i)
+					{
+						if(exists($ResponseHash_ptr->{ResultStatus}->{TicketID}) )
+						{
+							$ResponseHash_ptr->{ResponseErrorCode} = 0;
+							$ResponseHash_ptr->{ResponseErrorMessage} = '';
+							$rit = 1;
+						}
+						else
+						{
+							$ResponseHash_ptr->{ResponseErrorCode} = 6; 
+							$ResponseHash_ptr->{ResponseErrorMessage} = 'Response ad una request di CREATE priva del campo TicketID.';
+						}
+						
+					}
+					elsif($RequestType =~ m/^UPDATE$/i)
+					{
+						if(exists($ResponseHash_ptr->{ResultStatus}->{Status}) )
+						{
+							$ResponseHash_ptr->{ResponseErrorCode} = 0;
+							$ResponseHash_ptr->{ResponseErrorMessage} = '';
+							$rit = 1; #tutto ok
+						}
+						else
+						{
+							$ResponseHash_ptr->{ResponseErrorCode} = 5; 
+							$ResponseHash_ptr->{ResponseErrorMessage} = 'Response ad una request di UPDATE priva del campo Status.';
+						}
+					}
+					else #notify
+					{
+						$ResponseHash_ptr->{ResponseErrorCode} = 0;
+						$ResponseHash_ptr->{ResponseErrorMessage} = '';
+						$rit = 1; #tutto ok
+					}
+				}
+				else
+				{
+					if(exists($ResponseHash_ptr->{ResultStatus}->{ErrorMessage})  and exists($ResponseHash_ptr->{ResultStatus}->{ErrorDescription}) )
+					{
+						$ResponseHash_ptr->{ResponseErrorCode} = $ResponseHash_ptr->{ResultStatus}->{ErrorMessage}; 
+						$ResponseHash_ptr->{ResponseErrorMessage} = $ResponseHash_ptr->{ResultStatus}->{ErrorDescription};
+					}
+					else
+					{
+						$ResponseHash_ptr->{ResponseErrorCode} = 4; 
+						$ResponseHash_ptr->{ResponseErrorMessage} = 'Response da Wind segnala errore ma manca dettaglio (ErrorMessage e ErrorDescription)';
+					}
+				}
+			}
+			else
+			{
+				$ResponseHash_ptr->{ResponseErrorCode} = 3; 
+				$ResponseHash_ptr->{ResponseErrorMessage} = 'StatusCode assente nella Response!';
+			}
+			
+		}
+		else
+		{
+			$ResponseHash_ptr->{ResponseErrorCode} = 2; 
+			$ResponseHash_ptr->{ResponseErrorMessage} = 'TransactionId della Response da EAI/Wind diverso da quello della Request';
+		}
+		
+	}
+	
+	return $rit;
 }
 
 
