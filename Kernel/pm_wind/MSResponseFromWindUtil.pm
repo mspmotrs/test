@@ -6,7 +6,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 # Exporting the saluta routine
-our @EXPORT = qw(XXXXXXXXXX);
+our @EXPORT = qw(MS_ResponseToResponseHash MS_CheckResponseFromWind);
 # Exporting the saluta2 routine on demand basis.
 #our @EXPORT_OK = qw(saluta2);
 
@@ -18,6 +18,13 @@ use FindBin qw($Bin);
 use lib "$Bin";
 use lib "$Bin/..";
 use lib "$Bin/../cpan-lib";
+
+
+
+
+
+# ----------------- Attiva/disattiva debug per sviluppo ------------------
+my $MS_DEBUG = 1; # 0 -> disattivato, 1 -> attivato
 
 
 
@@ -60,6 +67,14 @@ sub MS_ResponseToResponseHash
 	my $TicketHash_ptr = shift;
 	my $XMLHash_ptr = shift;
 
+	
+	#if ($MS_DEBUG)
+	#{
+	#	use Data::Dumper;
+	#	print "\n".Dumper($XMLHash_ptr)."\n";
+	#}
+	
+	
 	my $rootTag = $XMLHash_ptr->[0]->{OTRS_API}[1]->{TicketResponse}[1];
 	my $rootTagHeader = $rootTag->{Header}[1];
 	my $rootTagBody = $rootTag->{ResultStatus}[1];
@@ -73,12 +88,12 @@ sub MS_ResponseToResponseHash
 	
 	foreach my $key (keys(%{$rootTagHeader}))
 	{	
-		$header->{$key} = $rootTagHeader->{$key}[1]->{Content} if(exists($rootTagHeader->{$key}[1]->{Content}));
+		$header->{$key} = $rootTagHeader->{$key}[1]->{Content} if(exists($rootTagHeader->{$key}) and ref($rootTagHeader->{$key}) eq 'ARRAY' and exists($rootTagHeader->{$key}[1]->{Content}));
 	}
 	
 	foreach my $key (keys(%{$rootTagBody}))
 	{	
-		$body->{$key} = $rootTagBody->{$key}[1]->{Content} if(exists($rootTagBody->{$key}[1]->{Content}));
+		$body->{$key} = $rootTagBody->{$key}[1]->{Content} if(exists($rootTagBody->{$key}) and ref($rootTagBody->{$key}) eq 'ARRAY' and exists($rootTagBody->{$key}[1]->{Content}));
 	}
 }
 
@@ -98,9 +113,16 @@ sub MS_CheckResponseFromWind
 	if (defined($TicketHash_ptr) and exists($ResponseHash_ptr->{Header}) and exists($ResponseHash_ptr->{ResultStatus}) )
 	{
 		my $TransactionId = $TicketHash_ptr->{RequestHash}->{HEADER}->{TransactionId};
+	
+			#debug
+			print "\nYYY1\n" if($MS_DEBUG);		
 		
-		if (exists($ResponseHash_ptr->{Header}->{TransactionId}) and $TransactionId eq $ResponseHash_ptr->{Header}->{TransactionId})
+		if ($MS_DEBUG or ( exists($ResponseHash_ptr->{Header}->{TransactionId}) and ($TransactionId eq $ResponseHash_ptr->{Header}->{TransactionId})  ) ) #quando sono in debug ignoro il transactionID
 		{
+			
+			#debug
+			print "\nYYY2\n" if($MS_DEBUG);			
+			
 			if (exists($ResponseHash_ptr->{ResultStatus}->{StatusCode}) )
 			{
 				if ($ResponseHash_ptr->{ResultStatus}->{StatusCode} == 0 )

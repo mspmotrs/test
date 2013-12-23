@@ -3151,6 +3151,8 @@
 <Item Key="note-external-Siebel">0</Item>
 <Item Key="note-external-FromPI">0</Item>
 <Item Key="note-external-ToPI">0</Item>
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
 </Hash>
 </Setting>
 <SubGroup>Frontend::Agent::Ticket::ViewFreeText</SubGroup>
@@ -3954,6 +3956,8 @@
 <Item Key="note-external-Siebel">0</Item>
 <Item Key="note-external-FromPI">0</Item>
 <Item Key="note-external-ToPI">0</Item>
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
 </Hash>
 </Setting>
 <SubGroup>Frontend::Agent::Ticket::ViewClose</SubGroup>
@@ -4244,6 +4248,8 @@
 <Item Key="note-external-Siebel">0</Item>
 <Item Key="note-external-FromPI">0</Item>
 <Item Key="note-external-ToPI">1</Item>
+<Item Key="note-external-ToWind">1</Item>
+<Item Key="note-external-FromWind">0</Item>
 </Hash>
 </Setting>
 <SubGroup>Frontend::Agent::Ticket::ViewNote</SubGroup>
@@ -4533,6 +4539,8 @@
 <Item Key="note-external-Siebel">0</Item>
 <Item Key="note-external-FromPI">0</Item>
 <Item Key="note-external-ToPI">0</Item>
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
 </Hash>
 </Setting>
 <SubGroup>Frontend::Agent::Ticket::ViewOwner</SubGroup>
@@ -4821,6 +4829,8 @@
 <Item Key="note-external-Siebel">0</Item>
 <Item Key="note-external-FromPI">0</Item>
 <Item Key="note-external-ToPI">0</Item>
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
 </Hash>
 </Setting>
 <SubGroup>Frontend::Agent::Ticket::ViewPending</SubGroup>
@@ -5110,6 +5120,8 @@
 <Item Key="note-external-pending">0</Item>
 <Item Key="note-external-FromPI">0</Item>
 <Item Key="note-external-ToPI">0</Item>
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
 </Hash>
 </Setting>
 <SubGroup>Frontend::Agent::Ticket::ViewPriority</SubGroup>
@@ -5399,6 +5411,8 @@
 <Item Key="note-external-pending">0</Item>
 <Item Key="note-external-FromPI">0</Item>
 <Item Key="note-external-ToPI">0</Item>
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
 </Hash>
 </Setting>
 <SubGroup>Frontend::Agent::Ticket::ViewResponsible</SubGroup>
@@ -5611,6 +5625,8 @@
 <Item Key="note-external-Siebel">0</Item>
 <Item Key="note-external-FromPI">0</Item>
 <Item Key="note-external-ToPI">0</Item>
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
 </Hash>
 </Setting>
 <SubGroup>Frontend::Agent::Ticket::ViewBulk</SubGroup>
@@ -10216,7 +10232,7 @@ Thanks for your help!
                                 <Item>Incident per PI</Item>
                                 <Item>SR da PI</Item>
                         </Array>
-                </Item> 	
+                </Item> 		
         </Hash>
 	</Setting>
 	<SubGroup>Core::Ticket</SubGroup>
@@ -10313,20 +10329,66 @@ Thanks for your help!
 			<!--                               CODE (Full)                             -->
 			<!-- ********************************************************************* -->
 			<!-- ID della coda abilitata ad instradare le richieste (incident e SR) verso Wind -->
-			<!-- default name: PM_WIND_OUT -->
-			<Item Key="queue_id_incident_for_wind">-1</Item>
+			<!-- default name: WIND_OUT -->
+			<Item Key="queue_id_incident_for_wind">1022</Item>
 
-			<!-- ID della coda abilitata ad instradare gli alarm verso Wind -->
-			<!-- default name: PM_WIND_ALARM_OUT -->
-			<Item Key="queue_id_alarm_to_wind">-1</Item>
+			<!-- ID della coda abilitata ad instradare gli alarm verso Wind (visibili solo a PM)-->
+			<!-- default name: WIND_OUT_Alarm -->
+			<Item Key="queue_id_alarm_to_wind">1026</Item>
 
 			<!-- ID della coda abilitata a ricevere gli alarm da Wind -->
-			<!-- default name: PM_WIND_ALARM_IN -->
-			<Item Key="queue_id_alarm_from_wind">-1</Item>
+			<!-- default name: MVNE-FE-Wind-Alarm -->
+			<Item Key="queue_id_alarm_from_wind">1023</Item>
 
 			<!-- ID della coda Ericsson -->
-			<!-- default name: PM_OUT_ERICSSON -->
-			<Item Key="queue_id_ericsson">-1</Item>
+			<!-- default name: ERICSSON-BackEnd -->
+			<Item Key="queue_id_ericsson">1018</Item>
+
+
+
+			<!-- ID della coda con visibilita' Ericsson su cui PM puo' spostare gli alarm da Wind -->
+			<!-- default name: MVNE-FE-Wind-Ericsson-Alarm -->
+			<Item Key="queue_id_MVNE-FE-Wind-Ericsson-Alarm">1028</Item>
+			
+			<!-- ID della coda abilitata ad instradare le richieste (incident e SR) verso Wind da parte di Ericsson -->
+			<!-- default name: ERICSSON_PM_WIND_OUT -->
+			<Item Key="queue_id_ERICSSON_PM_WIND_OUT">1024</Item>
+			
+			<!-- ID della coda abilitata ad instradare le richieste (incident) da Ericsson verso PM -->
+			<!-- default name: MVNE-FE-Ericsson-Incident -->
+			<Item Key="queue_id_MVNE-FE-Ericsson-Incident">1029</Item>
+
+			<!-- ID della coda abilitata ad instradare gli alarm da Ericsson verso Wind (visibili anche a PM) -->
+			<!-- default name: ERICSSON-WIND-OUT-Alarm -->
+			<Item Key="queue_id_ERICSSON-WIND-OUT-Alarm">1020</Item>
+			
+			<!-- ID della coda abilitata ad instradare gli alarm da PM verso Wind (visibili anche a Ericsson) -->
+			<!-- default name: WIND-ERICSSON-OUT-Alarm -->
+			<Item Key="queue_id_WIND-ERICSSON-OUT-Alarm">1027</Item>
+			
+			<!-- ID della coda abilitata ad instradare gli alarm da PM verso Ericsson -->
+			<!-- default name: ERICSSON-OUT-Alarm -->
+			<Item Key="queue_id_ERICSSON-OUT-Alarm">1025</Item>	
+			
+			<!-- ID della coda abilitata ad instradare gli alarm da Ericsson verso PM -->
+			<!-- default name: MVNE-FE-Ericsson-Alarm -->
+			<Item Key="queue_id_MVNE-FE-Ericsson-Alarm">1019</Item>
+			
+			<!-- ID della coda di default per la creazione di Alarm e Incident da parte di PM -->
+			<!-- default name: PM-Create -->
+			<Item Key="queue_id_PM-Create">1021</Item>	
+
+			<!-- ID della coda di default per la creazione di Alarm e Incident da parte di Ericsson -->
+			<!-- default name: ERICSSON-Create -->
+			<Item Key="queue_id_ERICSSON-Create">1017</Item>	
+								
+
+
+			<!-- ********************************************************************* -->
+			<!--                   Wind ticket state type (Full)                       -->
+			<!-- ********************************************************************* -->
+			<!--  Gli stati "Sospeso","RisoltoNRI" e "RisoltoNoACT" avrranno questo type   -->
+			<Item Key="ticketStateTypeID_WIND">8</Item>					
 			
 			
 			<!-- ********************************************************************* -->
@@ -10356,32 +10418,38 @@ Thanks for your help!
 			<!--  ChiusoINF (closed unsuccessful inf)  -->
 			<Item Key="ticketStateID_ChiusoINF">11</Item>
 			
-			<Item Key="ticketStateID_XXXXXX">-1</Item>
-			<Item Key="ticketStateID_XXXXXX">-1</Item>
+			<!--  *** nuovi stati ***  -->
+			<Item Key="ticketStateID_Sospeso">12</Item>
+			<!--  Risolto NON riscontrato  -->
+			<Item Key="ticketStateID_RisoltoNRI">13</Item>
+			<!--  Risolto NO ACTION  -->
+			<Item Key="ticketStateID_RisoltoNoACT">14</Item>
 			
-			
+
+		
 			<!-- ********************************************************************* -->
 			<!--                                Tipi (Full)                            -->
 			<!-- ********************************************************************* -->
 
 			<!--  Incident To Wind (from PM and from Ericsson) -->
-			<Item Key="ticketTypeID_IncidentToWind">-1</Item>
+			<Item Key="ticketTypeID_IncidentToWind">53</Item>
 			<!--  Incident To PM from Ericsson -->
-			<Item Key="ticketTypeID_IncidentToPM">-1</Item>
+			<Item Key="ticketTypeID_IncidentToPM">54</Item>
 			<!--  Incident To Ericsson from PM -->
-			<Item Key="ticketTypeID_IncidentToEricsson">-1</Item>
+			<Item Key="ticketTypeID_IncidentToEricsson">55</Item>
 			
 			<!--  Alarm From Wind  -->
-			<Item Key="ticketTypeID_AlarmFromWind">-1</Item>
+			<Item Key="ticketTypeID_AlarmFromWind">59</Item>
 						
 			<!--  Alarm To Wind (from PM and from Ericsson) -->
-			<Item Key="ticketTypeID_AlarmToWind">-1</Item>
+			<Item Key="ticketTypeID_AlarmToWind">56</Item>
 			<!--  Alarm from PM to Ericsson  -->
-			<Item Key="ticketTypeID_AlarmToEricsson">-1</Item>
+			<Item Key="ticketTypeID_AlarmToEricsson">57</Item>
 			<!--  Alarm from Ericsson to PM  -->
-			<Item Key="ticketTypeID_AlarmToPM">-1</Item>		
+			<Item Key="ticketTypeID_AlarmToPM">58</Item>		
 			
-			
+
+		
 			<!-- ********************************************************************* -->
 			<!--                        freekey mapping (Full)                         -->
 			<!-- ********************************************************************* -->
@@ -10419,14 +10487,14 @@ Thanks for your help!
 			<!-- nota destinata a Wind e che viene popolata da GUI  -->
 			<Item Key="article_type_ToWind">note-external-ToWind</Item> 
 			<!-- deve corrispondere al Type precedente -->
-			<Item Key="article_typeID_ToWind">-1</Item>
+			<Item Key="article_typeID_ToWind">17</Item>
 			<!-- Entro quanto tempo dalla creazione considero valida una nota da inviare a Wind. Espresso in secondi [default 18000 (5h)] -->
 			<Item Key="article_validityTime_ToWind">18000</Item>
 
 			<!-- nota che arriva da Wind -->
 			<Item Key="article_type_FromWind">note-external-FromWind</Item>
 			<!-- deve corrispondere al Type precedente -->
-			<Item Key="article_typeID_FromWind">-1</Item>
+			<Item Key="article_typeID_FromWind">18</Item>
 			
 			<Item Key="article_historyType_add">AddNote</Item>
 			<Item Key="article_historyComment_addFromWind">Add Note from Wind</Item>
@@ -10434,6 +10502,7 @@ Thanks for your help!
 			<Item Key="article_senderType">system</Item>
 			<!-- deve corrispondere al Type precedente -->
 			<Item Key="article_senderTypeID">3</Item>
+
 			
 		</Hash>
 	</Setting>

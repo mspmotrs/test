@@ -109,6 +109,7 @@ sub MS_ResponseBuild
 	$MS_Response_body{ErrorMessage} = $MS_Response_info_ptr->{ErrorMessage} if(exists($MS_Response_info_ptr->{ErrorMessage}));
 	$MS_Response_body{ErrorDescription} = $MS_Response_info_ptr->{ErrorDescription} if(exists($MS_Response_info_ptr->{ErrorDescription}));
 	$MS_Response_body{TransactionId} = $MS_Response_info_ptr->{TransactionId} if(exists($MS_Response_info_ptr->{TransactionId}));
+	$MS_Response_body{BusinessId} = $MS_Response_info_ptr->{BusinessId} if(exists($MS_Response_info_ptr->{BusinessId}));
 	
 	$MS_Response_body{TicketID} = $MS_Response_info_ptr->{TicketID} if(exists($MS_Response_info_ptr->{TicketID}));
 
@@ -175,7 +176,8 @@ sub MS_ResponseBuild_header
 	my $XML_tags = '';
 	foreach my $key (keys %{$MS_Response_header_ptr})
 	{
-		$XML_tags .= '<'.$key.'>'.$MS_Response_header_ptr->{$key}.'</'.$key.">\n";
+		#Nota: proteggo tutti i contenuti dal parsing con <![CDATA[XXXXXX]]>
+		$XML_tags .= '<'.$key.'><![CDATA['.$MS_Response_header_ptr->{$key}.']]></'.$key.">\n";
 	}
 	
 	my $XML_header = '<'.$MS_Response_header_container_tag.">\n";
@@ -207,7 +209,8 @@ sub MS_ResponseBuild_body
 	my $XML_tags = '';
 	foreach my $key (keys %{$MS_Response_body_ptr})
 	{
-		$XML_tags .= '<'.$key.'>'.$MS_Response_body_ptr->{$key}.'</'.$key.">\n";
+		#Nota: proteggo tutti i contenuti dal parsing con <![CDATA[XXXXXX]]>
+		$XML_tags .= '<'.$key.'><![CDATA['.$MS_Response_body_ptr->{$key}.']]></'.$key.">\n";
 	}
 	
 	my $XML_body = '<'.$MS_Response_body_container_tag.">\n";

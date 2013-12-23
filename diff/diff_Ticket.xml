@@ -1,0 +1,427 @@
+
+
+
+
+
+
+
+
+
+<ConfigItem Name="Ticket::Type::TicketTypeGroup" Required="0" Valid="1">
+....
+	<Item Key="Wind-Ericsson">
+			<Array>
+					<Item>Incident per WIND</Item>
+					<Item>Alarm per WIND</Item>
+					<Item>Incident per ERICSSON</Item>
+					<Item>Alarm per ERICSSON</Item>
+			</Array>
+	</Item> 	
+...
+</ConfigItem>
+
+
+
+
+
+
+<!-- Nota per la diff: aggiunte le ultime 2 key -->
+<ConfigItem Name="Ticket::Frontend::AgentTicketFreeText###ArticleTypes" Required="0" Valid="1">
+...
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
+...
+</ConfigItem>
+
+
+
+<!-- Nota per la diff: aggiunte le ultime 2 key -->
+<ConfigItem Name="Ticket::Frontend::AgentTicketClose###ArticleTypes" Required="0" Valid="1">
+...
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
+...
+</ConfigItem>
+
+
+<!-- Nota per la diff: aggiunte le ultime 2 key  (ATTENZIONE: questa ne attiva una)-->
+<ConfigItem Name="Ticket::Frontend::AgentTicketNote###ArticleTypes" Required="0" Valid="1">
+...
+<Item Key="note-external-ToWind">1</Item>
+<Item Key="note-external-FromWind">0</Item>
+...
+</ConfigItem>
+
+
+<!-- Nota per la diff: aggiunte le ultime 2 key -->
+<ConfigItem Name="Ticket::Frontend::AgentTicketOwner###ArticleTypes" Required="0" Valid="1">
+...
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
+...
+</ConfigItem>
+
+
+
+<!-- Nota per la diff: aggiunte le ultime 2 key -->
+<ConfigItem Name="Ticket::Frontend::AgentTicketPending###ArticleTypes" Required="0" Valid="1">
+...
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
+...
+</ConfigItem>
+
+
+
+<!-- Nota per la diff: aggiunte le ultime 2 key -->
+<ConfigItem Name="Ticket::Frontend::AgentTicketPriority###ArticleTypes" Required="0" Valid="1">
+...
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
+...
+</ConfigItem>
+
+
+
+<!-- Nota per la diff: aggiunte le ultime 2 key -->
+<ConfigItem Name="Ticket::Frontend::AgentTicketResponsible###ArticleTypes" Required="0" Valid="1">
+...
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
+...
+</ConfigItem>
+
+
+
+
+
+<!-- Nota per la diff: aggiunte le ultime 2 key -->
+<ConfigItem Name="Ticket::Frontend::AgentTicketBulk###ArticleTypes" Required="0" Valid="1">
+...
+<Item Key="note-external-ToWind">0</Item>
+<Item Key="note-external-FromWind">0</Item>
+...
+</ConfigItem>
+
+
+
+
+
+
+
+<!-- Nota per la diff: segue tutto il blocco finale della conf per il Full -->
+
+
+<!-- ******************************************************************************** -->
+<!--                 Inizio configurazione PM_Wind (Full)                             -->
+<!-- ******************************************************************************** -->
+
+<ConfigItem Name="PM_Wind_settings" Required="0" Valid="1">
+    <Description Lang="en">PM-Wind (FULL) configuration.</Description>
+	<Group>Ticket</Group>
+	<Setting>
+		<Hash>
+
+			<!-- ********************************************************************* -->
+			<!--                             GENERALE (Full)                           -->
+			<!-- ********************************************************************* -->
+								
+			<!-- Livello di dettaglio del log: da 1 (min) a 3 (max)  -->
+			<Item Key="log_level">3</Item>
+
+			<!-- URL del servizio esposto da EAI verso OTRS  -->
+			<Item Key="EAI_endpoint">http://localhost:80/otrs_dev/test_EAI_endpoint.pl</Item>
+
+
+			<!-- ********************************************************************* -->
+			<!--                               UTENZE (Full)                           -->
+			<!-- ********************************************************************* -->
+			<!-- ID dell'utenza di sistema usata per effetture le operazioni in OTRS -->
+			<Item Key="system_user_id">1</Item>
+
+
+			<!-- ********************************************************************* -->
+			<!--                               CODE (Full)                             -->
+			<!-- ********************************************************************* -->
+			<!-- ID della coda abilitata ad instradare le richieste (incident e SR) verso Wind -->
+			<!-- default name: WIND_OUT -->
+			<Item Key="queue_id_incident_for_wind">1022</Item>
+
+			<!-- ID della coda abilitata ad instradare gli alarm verso Wind (visibili solo a PM)-->
+			<!-- default name: WIND_OUT_Alarm -->
+			<Item Key="queue_id_alarm_to_wind">1026</Item>
+
+			<!-- ID della coda abilitata a ricevere gli alarm da Wind -->
+			<!-- default name: MVNE-FE-Wind-Alarm -->
+			<Item Key="queue_id_alarm_from_wind">1023</Item>
+
+			<!-- ID della coda Ericsson -->
+			<!-- default name: ERICSSON-BackEnd -->
+			<Item Key="queue_id_ericsson">1018</Item>
+
+
+
+			<!-- ID della coda con visibilita' Ericsson su cui PM puo' spostare gli alarm da Wind -->
+			<!-- default name: MVNE-FE-Wind-Ericsson-Alarm -->
+			<Item Key="queue_id_MVNE-FE-Wind-Ericsson-Alarm">1028</Item>
+			
+			<!-- ID della coda abilitata ad instradare le richieste (incident e SR) verso Wind da parte di Ericsson -->
+			<!-- default name: ERICSSON_PM_WIND_OUT -->
+			<Item Key="queue_id_ERICSSON_PM_WIND_OUT">1024</Item>
+			
+			<!-- ID della coda abilitata ad instradare le richieste (incident) da Ericsson verso PM -->
+			<!-- default name: MVNE-FE-Ericsson-Incident -->
+			<Item Key="queue_id_MVNE-FE-Ericsson-Incident">1029</Item>
+
+			<!-- ID della coda abilitata ad instradare gli alarm da Ericsson verso Wind (visibili anche a PM) -->
+			<!-- default name: ERICSSON-WIND-OUT-Alarm -->
+			<Item Key="queue_id_ERICSSON-WIND-OUT-Alarm">1020</Item>
+			
+			<!-- ID della coda abilitata ad instradare gli alarm da PM verso Wind (visibili anche a Ericsson) -->
+			<!-- default name: WIND-ERICSSON-OUT-Alarm -->
+			<Item Key="queue_id_WIND-ERICSSON-OUT-Alarm">1027</Item>
+			
+			<!-- ID della coda abilitata ad instradare gli alarm da PM verso Ericsson -->
+			<!-- default name: ERICSSON-OUT-Alarm -->
+			<Item Key="queue_id_ERICSSON-OUT-Alarm">1025</Item>	
+			
+			<!-- ID della coda abilitata ad instradare gli alarm da Ericsson verso PM -->
+			<!-- default name: MVNE-FE-Ericsson-Alarm -->
+			<Item Key="queue_id_MVNE-FE-Ericsson-Alarm">1019</Item>
+			
+			<!-- ID della coda di default per la creazione di Alarm e Incident da parte di PM -->
+			<!-- default name: PM-Create -->
+			<Item Key="queue_id_PM-Create">1021</Item>	
+
+			<!-- ID della coda di default per la creazione di Alarm e Incident da parte di Ericsson -->
+			<!-- default name: ERICSSON-Create -->
+			<Item Key="queue_id_ERICSSON-Create">1017</Item>	
+								
+
+
+			<!-- ********************************************************************* -->
+			<!--                   Wind ticket state type (Full)                       -->
+			<!-- ********************************************************************* -->
+			<!--  Gli stati "Sospeso","RisoltoNRI" e "RisoltoNoACT" avrranno questo type   -->
+			<Item Key="ticketStateTypeID_WIND">8</Item>					
+			
+			
+			<!-- ********************************************************************* -->
+			<!--                               Stati (Full)                            -->
+			<!-- ********************************************************************* -->
+
+			<!--  new  -->
+			<Item Key="ticketStateID_New">1</Item>
+			<!--  ChiusoRIS (closed successful)  -->
+			<Item Key="ticketStateID_ChiusoRIS">2</Item>
+			<!--  ChiusoNdC (closed unsuccessful)  -->
+			<Item Key="ticketStateID_ChiusoNdC">3</Item>
+			<!--  open  -->
+			<Item Key="ticketStateID_Open">4</Item>
+			<!--  removed  -->
+			<Item Key="ticketStateID_Removed">5</Item>
+			<!--  In Attesa Info (pending reminder)  -->
+			<Item Key="ticketStateID_InAttesaInfo">6</Item>
+			<!--  Risolto (pending auto close+)  -->
+			<Item Key="ticketStateID_Risolto">7</Item>
+			<!--  Non di competenza (pending auto close-)  -->
+			<Item Key="ticketStateID_NonDiCompetenza">8</Item>
+			<!--  merged  -->
+			<Item Key="ticketStateID_Merged">9</Item>
+			<!--  in progress  -->
+			<Item Key="ticketStateID_InProgress">10</Item>
+			<!--  ChiusoINF (closed unsuccessful inf)  -->
+			<Item Key="ticketStateID_ChiusoINF">11</Item>
+			
+			<!--  *** nuovi stati ***  -->
+			<Item Key="ticketStateID_Sospeso">12</Item>
+			<!--  Risolto NON riscontrato  -->
+			<Item Key="ticketStateID_RisoltoNRI">13</Item>
+			<!--  Risolto NO ACTION  -->
+			<Item Key="ticketStateID_RisoltoNoACT">14</Item>
+			
+
+		
+			<!-- ********************************************************************* -->
+			<!--                                Tipi (Full)                            -->
+			<!-- ********************************************************************* -->
+
+			<!--  Incident To Wind (from PM and from Ericsson) -->
+			<Item Key="ticketTypeID_IncidentToWind">53</Item>
+			<!--  Incident To PM from Ericsson -->
+			<Item Key="ticketTypeID_IncidentToPM">54</Item>
+			<!--  Incident To Ericsson from PM -->
+			<Item Key="ticketTypeID_IncidentToEricsson">55</Item>
+			
+			<!--  Alarm From Wind  -->
+			<Item Key="ticketTypeID_AlarmFromWind">59</Item>
+						
+			<!--  Alarm To Wind (from PM and from Ericsson) -->
+			<Item Key="ticketTypeID_AlarmToWind">56</Item>
+			<!--  Alarm from PM to Ericsson  -->
+			<Item Key="ticketTypeID_AlarmToEricsson">57</Item>
+			<!--  Alarm from Ericsson to PM  -->
+			<Item Key="ticketTypeID_AlarmToPM">58</Item>		
+			
+
+		
+			<!-- ********************************************************************* -->
+			<!--                        freekey mapping (Full)                         -->
+			<!-- ********************************************************************* -->
+
+			<Item Key="ticketFreekey1">Marcaggio</Item>
+			<!-- <Item Key="ticketFreekey2">MSISDN o CdG</Item> -->
+			<Item Key="ticketFreekey2">MSISDN | ID LINEA</Item>
+			<!-- <Item Key="ticketFreekey3">IMSI|ICCID</Item> -->
+			<Item Key="ticketFreekey3">IMSI | ICCID | IMEI</Item>
+			<Item Key="ticketFreekey4">SR Tipo</Item>
+			<Item Key="ticketFreekey5">SR Area</Item>
+			<Item Key="ticketFreekey6">SR Sub-Area</Item>
+			<Item Key="ticketFreekey7">DEV Ticket ID</Item>
+			<Item Key="ticketFreekey8">Release</Item>
+			<!-- <Item Key="ticketFreekey9">VF Ticket ID</Item> -->
+			<Item Key="ticketFreekey9">WIND Ticket ID</Item>
+			<!-- <Item Key="ticketFreekey10">VF Servizio|VF Descrizione</Item> -->
+			<Item Key="ticketFreekey10">AMBITO TT | TIPO LINEA | MNP TYPE</Item>
+			<!-- <Item Key="ticketFreekey11">VF Città|VF Provincia|VF Via</Item> -->
+			<Item Key="ticketFreekey11">Indirizzo | Provincia | Comune | CAP</Item>
+			<Item Key="ticketFreekey12">MasterTicket</Item>
+			<Item Key="ticketFreekey13">SubTipo</Item>
+			<Item Key="ticketFreekey14">PI Ticket ID</Item>
+			<!-- <Item Key="ticketFreekey15">PI Categoria</Item> -->
+			<Item Key="ticketFreekey15">WIND Category</Item>
+			<!-- <Item Key="ticketFreekey16">Frazionario</Item> -->
+			<Item Key="ticketFreekey16">Referente</Item>
+
+
+
+			<!-- ********************************************************************* -->
+			<!--                        Article (Full)  [note]                         -->
+			<!-- ********************************************************************* -->
+
+			<!-- nota destinata a Wind e che viene popolata da GUI  -->
+			<Item Key="article_type_ToWind">note-external-ToWind</Item> 
+			<!-- deve corrispondere al Type precedente -->
+			<Item Key="article_typeID_ToWind">17</Item>
+			<!-- Entro quanto tempo dalla creazione considero valida una nota da inviare a Wind. Espresso in secondi [default 18000 (5h)] -->
+			<Item Key="article_validityTime_ToWind">18000</Item>
+
+			<!-- nota che arriva da Wind -->
+			<Item Key="article_type_FromWind">note-external-FromWind</Item>
+			<!-- deve corrispondere al Type precedente -->
+			<Item Key="article_typeID_FromWind">18</Item>
+			
+			<Item Key="article_historyType_add">AddNote</Item>
+			<Item Key="article_historyComment_addFromWind">Add Note from Wind</Item>
+			
+			<Item Key="article_senderType">system</Item>
+			<!-- deve corrispondere al Type precedente -->
+			<Item Key="article_senderTypeID">3</Item>
+
+			
+		</Hash>
+	</Setting>
+	<SubGroup>Core::TicketFreeText</SubGroup>
+</ConfigItem>
+
+
+<ConfigItem Name="Category_Incident_PM_Wind" Required="0" Valid="1">
+    <Description Lang="en">Category Incident PM to Wind (FULL)</Description>
+	<Group>Ticket</Group>
+	<Setting>
+		<Hash>
+			<Item Key="OLOGW.ESPLETAMENTI-MNP">OLOGW.ESPLETAMENTI-MNP</Item>
+			<Item Key="OLOGW.MNP">OLOGW.MNP</Item>
+			<Item Key="OLOGW.MIGRAZIONE">OLOGW.MIGRAZIONE</Item>
+			<Item Key="ICB.INTERCONNESSIONE-BATCH">ICB.INTERCONNESSIONE-BATCH</Item>
+			<Item Key="ICB.INTERCONNESSIONE-ONLINE">ICB.INTERCONNESSIONE-ONLINE</Item>
+			<Item Key="VLR.VOCE">VLR.VOCE</Item>
+			<Item Key="VLR.VOCE-ROAMING">VLR.VOCE-ROAMING</Item>
+			<Item Key="GMSC.VOCE">GMSC.VOCE</Item>
+			<Item Key="GMSC.VOCE-ROAMING">GMSC.VOCE-ROAMING</Item>
+			<Item Key="VLR.SMS-OUT">VLR.SMS-OUT</Item>
+			<Item Key="GMSC.SMS-IN">GMSC.SMS-IN</Item>
+			<Item Key="VLR.SMS-ROAMING">VLR.SMS-ROAMING</Item>
+			<Item Key="ETG">ETG</Item>
+			<Item Key="NETWORK.LOCALIZAZZIONE">NETWORK.LOCALIZAZZIONE</Item>
+			<Item Key="NETWORK.COPERTURA">NETWORK.COPERTURA</Item>
+			<Item Key="NETWORK.INSTRADAMENTO">NETWORK.INSTRADAMENTO</Item>
+			<Item Key="MEDIATION">MEDIATION</Item>
+			<Item Key="IMEI.BLOCCO-SBLOCCO">IMEI.BLOCCO-SBLOCCO</Item>
+			<Item Key="FNR">FNR</Item>
+			<Item Key="GESTIONE-UTENZE">GESTIONE-UTENZE</Item>
+			<Item Key="ALTRO">ALTRO</Item>
+		</Hash>
+	</Setting>
+	<SubGroup>Core::TicketFreeText</SubGroup>
+</ConfigItem>
+
+
+<ConfigItem Name="Category_Alarm_PM_Wind" Required="0" Valid="1">
+    <Description Lang="en">Category Alarm PM to Wind (FULL)</Description>
+	<Group>Ticket</Group>
+	<Setting>
+		<Hash>
+			<Item Key="OLOGW">OLOGW</Item>
+			<Item Key="ICB">ICB</Item>
+			<Item Key="NETWORK">NETWORK</Item>
+			<Item Key="MEDIATION">MEDIATION</Item>
+			<Item Key="EAI">EAI</Item>
+			<Item Key="ALTRO">ALTRO</Item>
+			<Item Key="ATTIVITA-PROGRAMMATA">ATTIVITA-PROGRAMMATA</Item>
+		</Hash>
+	</Setting>
+	<SubGroup>Core::TicketFreeText</SubGroup>
+</ConfigItem>
+
+
+<ConfigItem Name="Category_Alarm_Wind_PM" Required="0" Valid="1">
+    <Description Lang="en">Category Alarm Wind to PM (FULL)</Description>
+	<Group>Ticket</Group>
+	<Setting>
+		<Hash>
+			<Item Key="MOBILE">MOBILE</Item>
+			<Item Key="UMTS">UMTS</Item>
+			<Item Key="GPRS">GPRS</Item>
+			<Item Key="RETE INTELLIGENTE">RETE INTELLIGENTE</Item>
+			<Item Key="ATTIVITA-PROGRAMMATA">ATTIVITA-PROGRAMMATA</Item>
+			<Item Key="ALTRO">ALTRO</Item>
+			<Item Key="AIMS.BLOCCO-SBLOCCO IMEI">AIMS.BLOCCO-SBLOCCO IMEI</Item>
+			<Item Key="ETG.ETG">ETG.ETG</Item>
+			<Item Key="MOG.OLOGW">MOG.OLOGW</Item>
+			<Item Key="TTM.Trouble Ticketing System">TTM.Trouble Ticketing System</Item>
+			<Item Key="TMS.MEDIATION">TMS.MEDIATION</Item>
+			<Item Key="FMS.FMS">FMS.FMS</Item>
+		</Hash>
+	</Setting>
+	<SubGroup>Core::TicketFreeText</SubGroup>
+</ConfigItem>
+
+
+
+
+<ConfigItem Name="AmbitoTT_PM_Wind" Required="0" Valid="1">
+    <Description Lang="en">Ambito TT PM_Wind (FULL)</Description>
+	<Group>Ticket</Group>
+	<Setting>
+		<Hash>	
+			<Item Key="MOBILE NW">MOBILE NW</Item>
+			<Item Key="MOBILE IT">MOBILE IT</Item>
+			<Item Key="INTERCONNESSIONE WHOLELINE">INTERCONNESSIONE WHOLELINE</Item>
+			<Item Key="CARRIER SELECTION">CARRIER SELECTION</Item>
+			<Item Key="FISSO">FISSO</Item>
+			<Item Key="MOBILE">MOBILE</Item>
+			<Item Key="ALTRO">ALTRO</Item>
+		</Hash>
+	</Setting>
+	<SubGroup>Core::TicketFreeText</SubGroup>
+</ConfigItem>
+
+<!-- ******************************************************************************** -->
+<!--                   FINE configurazione PM_Wind (FULL)                             -->
+<!-- ******************************************************************************** -->
+
+
+
+
+

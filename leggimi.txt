@@ -1,0 +1,8 @@
+File che vengono modificati:
+
+
+Kernel/Config/Files/Ticket.xml    (configurazione)
+
+Kernel/Output/HTML/Layout.pm      (valorizzazione custom di $Env per portare nel template le info necessarie alla valorizzazione)
+
+Kernel/Output/HTML/Customized/AgentTicketZoom.dtl

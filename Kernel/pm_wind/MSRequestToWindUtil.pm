@@ -6,7 +6,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 # Exporting the saluta routine
-our @EXPORT = qw(XXXXXXXXXXXXX);
+our @EXPORT = qw(MS_RequestBuildAndSend);
 # Exporting the saluta2 routine on demand basis.
 #our @EXPORT_OK = qw(saluta2);
 
@@ -21,15 +21,20 @@ use lib "$Bin/../cpan-lib";
 
 
 
+# ----------------- Attiva/disattiva debug per sviluppo ------------------
+my $MS_DEBUG = 1; # 0 -> disattivato, 1 -> attivato
+
 
 # ----------------- Moduli necessari ------------------
 #require LWP::UserAgent;
 use LWP::UserAgent;
-
+use MIME::Base64;
+use Data::Dumper;
 
 # ----------------- Moduli custom necessari ------------------
+use MSResponseFromWindUtil;
 use MSTicketUtil;
-
+use MSXMLUtil;
 
 
 
@@ -101,14 +106,21 @@ sub MS_RequestHashToXMLString
 		$$XML_tmp .= "<Header>\n"; #TODO: verificare la correttezza di questo tag contenitore 
 		foreach my $key (keys(%{$Hash_ptr->{HEADER}}) )
 		{
-			$$XML_tmp .= "<$key>".$Hash_ptr->{HEADER}->{$key}."</$key>\n";
+			#Nota: proteggo tutti i contenuti dal parsing con <![CDATA[XXXXXX]]>
+			$$XML_tmp .= "<$key><![CDATA[".$Hash_ptr->{HEADER}->{$key}."]]></$key>\n";
 		}
 		$$XML_tmp .= "</Header>\n";
 
-		$$XML_tmp .= "<Body>\n"; #TODO: verificare la correttezza di questo tag contenitore 
+		$$XML_tmp .= "<Body>\n"; #TODO: verificare la correttezza di questo tag contenitore
+		#debug
+		#print "\n".Dumper($Hash_ptr->{BODY})."\n" if($MS_DEBUG);
 		foreach my $key (keys(%{$Hash_ptr->{BODY}}) )
 		{
-			$$XML_tmp .= "<$key>".$Hash_ptr->{BODY}->{$key}."</$key>";
+			#debug
+			#print "\nKey = $key   --- contenuto = $Hash_ptr->{BODY}->{$key} \n" if($MS_DEBUG);
+			
+			#Nota: proteggo tutti i contenuti dal parsing con <![CDATA[XXXXXX]]>
+			$$XML_tmp .= "<$key><![CDATA[".$Hash_ptr->{BODY}->{$key}."]]></$key>\n" if(exists($Hash_ptr->{BODY}->{$key}) and defined($Hash_ptr->{BODY}->{$key}) );
 		}
 		
 		
@@ -124,9 +136,10 @@ sub MS_RequestHashToXMLString
 				{
 					$$XML_tmp .= "<Note>\n";
 					
-					$$XML_tmp .= "<Team>".$Hash_ptr->{ListOfNotes}->[$i]->{Team}."</Team>" if(exists($Hash_ptr->{ListOfNotes}->[$i]->{Team}));
-					$$XML_tmp .= "<CreationDate>".$Hash_ptr->{ListOfNotes}->[$i]->{CreationDate}."</CreationDate>" if(exists($Hash_ptr->{ListOfNotes}->[$i]->{CreationDate}));
-					$$XML_tmp .= "<Description>".$Hash_ptr->{ListOfNotes}->[$i]->{Description}."</Description>";
+					#Nota: proteggo tutti i contenuti dal parsing con <![CDATA[XXXXXX]]>
+					$$XML_tmp .= "<Team><![CDATA[".$Hash_ptr->{ListOfNotes}->[$i]->{Team}."]]></Team>\n" if(exists($Hash_ptr->{ListOfNotes}->[$i]->{Team}));
+					$$XML_tmp .= "<CreationDate><![CDATA[".$Hash_ptr->{ListOfNotes}->[$i]->{CreationDate}."]]></CreationDate>\n" if(exists($Hash_ptr->{ListOfNotes}->[$i]->{CreationDate}));
+					$$XML_tmp .= "<Description><![CDATA[".$Hash_ptr->{ListOfNotes}->[$i]->{Description}."]]></Description>\n";
 					
 					$$XML_tmp .= "</Note>\n";
 				}
@@ -145,9 +158,10 @@ sub MS_RequestHashToXMLString
 				{
 					$$XML_tmp .= "<Attachment>\n";
 					
-					$$XML_tmp .= "<FullFileName>".$Hash_ptr->{AttachedFiles}->[$i]->{Filename}."</FullFileName>";
-					$$XML_tmp .= "<TypeFile>".$Hash_ptr->{AttachedFiles}->[$i]->{ContentType}."</TypeFile>";
-					$$XML_tmp .= "<FileBody>".$Hash_ptr->{AttachedFiles}->[$i]->{Content}."</FileBody>";
+					#Nota: proteggo tutti i contenuti dal parsing con <![CDATA[XXXXXX]]>
+					$$XML_tmp .= "<FullFileName><![CDATA[".$Hash_ptr->{AttachedFiles}->[$i]->{Filename}."]]></FullFileName>\n";
+					$$XML_tmp .= "<TypeFile><![CDATA[".$Hash_ptr->{AttachedFiles}->[$i]->{ContentType}."]]></TypeFile>\n";
+					$$XML_tmp .= "<FileBody><![CDATA[".encode_base64($Hash_ptr->{AttachedFiles}->[$i]->{Content})."]]></FileBody>\n";
 					#$XML_tmp .= "<dataCreazione>".$Hash_ptr->{AttachedFiles}->[$i]->{---DATO MANCANTE ---}."</dataCreazione>";
 					
 					$$XML_tmp .= "</Attachment>\n";
@@ -204,86 +218,110 @@ sub MS_ArticleToListOfNotesStructure
 
 
 
+
+
+
+sub _MS_RequestBuild_HANDLER___checkIfFieldExists
+{
+	my $input = shift;
+	my $rit = undef;
+	
+	$rit = 1 if(defined($input) and $input !~ m/^\s*$/);
+	
+	return $rit;
+}
+
+
 #Info:
 #
 # input:
 #     xxxxxx
 #
 # output:
-#     undef - se la richiesta non puo' essere preparata
-#		stringa - che rappresenta la richiesta in formato XML se tutto e' OK
 #
 # Nota:xxxxxxxxxxx
 #
-sub MS_RequestBuild_Create_Incident
+sub _MS_RequestBuild_HANDLER
 {
 	my $ticket_id_or_tn = shift;
 	my $TicketID_is_a_TN = shift; #ad 1 se mi viene passato un TN al posto di un ID
    my $MS_TicketObject_ptr = shift;
+	my $actionType = shift;
+	my $WindTicketType = shift;
+	
 	my $TicketHash_ptr = shift; # opzionale
 	
 	
 	my $rit = undef;
 	
-	if( !defined($ticket_id_or_tn) or !defined($TicketID_is_a_TN) or !defined($MS_TicketObject_ptr) )
+	if( !defined($ticket_id_or_tn) or !defined($TicketID_is_a_TN) or !defined($MS_TicketObject_ptr) or !defined($actionType) or !defined($WindTicketType) )
 	{
 		return $rit; 
 	}
 	
-
+	#debug
+	print "\nOK1\n" if($MS_DEBUG);
+	print "\nticket_id_or_tn=$ticket_id_or_tn, TicketID_is_a_TN=$TicketID_is_a_TN\n" if($MS_DEBUG);
+	
 	my $MS_DBObject_ptr = $MS_TicketObject_ptr->{DBObject};
 	my $MS_ConfigObject_ptr = $MS_DBObject_ptr->{ConfigObject};
 	my $MS_LogObject_ptr = $MS_DBObject_ptr->{LogObject};
 	
 	$TicketHash_ptr = {} if(!defined($TicketHash_ptr));	
 	
-
-	# 0 -> NON sono presenti tutte le info necessarie
-	# 1 -> se ok
-	if( MS_CheckIfIncidentOrSrIsOkForCreate($ticket_id_or_tn, $TicketID_is_a_TN, $MS_DBObject_ptr, $TicketHash_ptr) )
+	
+	#Anche se il controllo e' "for Create" va bene in generale
+	my $isOkToHandle = 0;
+	if($WindTicketType eq 'INCIDENT')
 	{
-		#gestione note
-		my $validArticleIdForWind = $TicketHash_ptr->{WIND_VALID_ARTICLE_ID};
-		$TicketHash_ptr->{_ARTICLE} = {};
-		
-		# 0 -> KO (article non esiste, oppure errore generico)
-		# 1 -> OK (article trovato)
-		my $article_rit = MS_ArticleGetInfo($validArticleIdForWind, $MS_DBObject_ptr, $TicketHash_ptr->{_ARTICLE});
-		if (!$article_rit)
-		{
-			return $rit;
-		}
-		
-		#aggiungo la struttura per generare l'XML per la nota in uscita --> per la CREATE non valorizzo mai la nota ma 'Oggetto' e 'Descrizione'
-		#MS_ArticleToListOfNotesStructure($TicketHash_ptr);
-		
-		$TicketHash_ptr->{RequestHash} = {};
-		
-		
-		
-		# 0 -> KO (non esistono allegato per questo article, oppure errore generico)
-		# num > 0 -> OK (numero degli allegati trovati)
-		#
-		my $attachments_rit = MS_GetArticleAttachments($validArticleIdForWind, $MS_TicketObject_ptr, $TicketHash_ptr->{RequestHash});
-		#qui ho $TicketHash_ptr->{RequestHash}->{AttachedFiles}  che viene creato e popolato dalla sub precedente
-		
-		
-		
-		
-		
-		
-		my $ReqHash_ptr = $TicketHash_ptr->{RequestHash};
-		
+		$isOkToHandle = MS_CheckIfIncidentOrSrIsOkForCreate($ticket_id_or_tn, $TicketID_is_a_TN, $MS_DBObject_ptr, $TicketHash_ptr);
+	}
+	elsif($WindTicketType eq 'ALARM')
+	{
+		$isOkToHandle = MS_CheckIfAlarmIsOkForCreate($ticket_id_or_tn, $TicketID_is_a_TN, $MS_DBObject_ptr, $TicketHash_ptr);
+	}
+	else
+	{
+		return $rit;
+	}
+	
+
+	#debug
+	print "\nOK2\n" if($MS_DEBUG);
+	
+	#potrebbe essere fallito il controllo sualle categorie o sui tipi di ticket, ecc.
+	if( !$isOkToHandle )
+	{
+		return $rit;
+	}
+
+
+
+	#hashes da popolare....
+	$TicketHash_ptr->{RequestHash} = {};
+	my $ReqHash_ptr = $TicketHash_ptr->{RequestHash};
+	$ReqHash_ptr->{HEADER} = {};
+	my $ReqHeader_ptr = $ReqHash_ptr->{HEADER};
+	$ReqHash_ptr->{BODY} = {};
+	my $ReqBody_ptr = $ReqHash_ptr->{BODY};
+
+
+
+
+
+	
+	#debug
+	print "\nOK3\n" if($MS_DEBUG);
+	
+	
+	
+	if($actionType eq 'CREATE')
+	{
 		$ReqHash_ptr->{RequestType} = 1; #Create
 		#$ReqHash_ptr->{RequestType} = 2; #Update
 		#$ReqHash_ptr->{RequestType} = 3; #Notify
 		#$ReqHash_ptr->{RequestType} = ?  #unknow
-		
-		$ReqHash_ptr->{HEADER} = {};
-		my $ReqHeader_ptr = $ReqHash_ptr->{HEADER};
-		$ReqHash_ptr->{BODY} = {};
-		my $ReqBody_ptr = $ReqHash_ptr->{BODY};
-		
+
 
 		### --- Request header ---
 		#SourceChannel
@@ -319,6 +357,22 @@ sub MS_RequestBuild_Create_Incident
 		#prov
 		#city	
 		#cap
+
+
+		# ---------------------- Nota -------------------------
+		my $validArticleIdForWind = $TicketHash_ptr->{WIND_VALID_ARTICLE_ID};
+		$TicketHash_ptr->{_ARTICLE} = {};
+		
+		# 0 -> KO (article non esiste, oppure errore generico)
+		# 1 -> OK (article trovato)
+		my $article_rit = MS_ArticleGetInfo($validArticleIdForWind, $MS_DBObject_ptr, $TicketHash_ptr->{_ARTICLE});
+		if (!$article_rit)
+		{
+			return $rit;
+		}
+		
+		
+
 		
 		$ReqHeader_ptr->{SourceChannel} = 'OTRS' ;
 		$ReqHeader_ptr->{DestinationChannel} = 'WIND' ;
@@ -327,8 +381,10 @@ sub MS_RequestBuild_Create_Incident
 		$ReqHeader_ptr->{BusinessId} = 'unknow' ; #TODO: valorizzare con i valori attesi da EAI 
 		
 		
+		$ReqBody_ptr->{TicketID} = $TicketHash_ptr->{TN} ; #ATTENZIONE: mandiamo fuori in TN e non l'ID !!!
 		#$ReqBody_ptr->{TickedIDWind} = '' ; 
-		$ReqBody_ptr->{Type} = 'INCIDENT' ; 
+		$ReqBody_ptr->{Type} = 'INCIDENT' ;
+		
 		$ReqBody_ptr->{Action} = 'CREATE' ; 
 		#$ReqBody_ptr->{Status} = '' ; 
 		$ReqBody_ptr->{priority} = $TicketHash_ptr->{TICKET_PRIORITY_ID} ;
@@ -340,23 +396,186 @@ sub MS_RequestBuild_Create_Incident
 		
 		#$ReqBody_ptr->{startDateMalfunction} = '' ; 
 		#$ReqBody_ptr->{endDateMalfunction} = '' ;
-		$ReqBody_ptr->{segmentCustomer} = $TicketHash_ptr->{FREETEXT15} ;
-		$ReqBody_ptr->{msisdn} = $TicketHash_ptr->{WIND_MSISDN} ;
-		$ReqBody_ptr->{imsi} = $TicketHash_ptr->{WIND_IMSI} ;
-		$ReqBody_ptr->{iccid} = $TicketHash_ptr->{WIND_ICCID} ;
-		$ReqBody_ptr->{idLinea} = $TicketHash_ptr->{WIND_ID_LINEA} ;
-		$ReqBody_ptr->{tipoLinea} = $TicketHash_ptr->{WIND_TIPO_LINEA} ;
-		$ReqBody_ptr->{mnpType} = $TicketHash_ptr->{WIND_MNP_TYPE} ;
-		$ReqBody_ptr->{imei} = $TicketHash_ptr->{WIND_IMEI} ;
-		$ReqBody_ptr->{Referente} = $TicketHash_ptr->{FREETEXT16} ;
+		$ReqBody_ptr->{segmentCustomer} = $TicketHash_ptr->{FREETEXT1}  if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{FREETEXT1}));
+		$ReqBody_ptr->{msisdn} = $TicketHash_ptr->{WIND_MSISDN} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_MSISDN}));
+		$ReqBody_ptr->{imsi} = $TicketHash_ptr->{WIND_IMSI} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_IMSI}));
+		$ReqBody_ptr->{iccid} = $TicketHash_ptr->{WIND_ICCID} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_ICCID}));
+		$ReqBody_ptr->{idLinea} = $TicketHash_ptr->{WIND_ID_LINEA} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_ID_LINEA}));
+		$ReqBody_ptr->{tipoLinea} = $TicketHash_ptr->{WIND_TIPO_LINEA} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_TIPO_LINEA}));
+		$ReqBody_ptr->{mnpType} = $TicketHash_ptr->{WIND_MNP_TYPE} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_MNP_TYPE}));
+		$ReqBody_ptr->{imei} = $TicketHash_ptr->{WIND_IMEI} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_IMEI}));
+		$ReqBody_ptr->{Referente} = $TicketHash_ptr->{FREETEXT16} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{FREETEXT16}));
 		#$ReqBody_ptr->{Nota} = '' ; # Nella CREATE non utilizzo la Nota
-		$ReqBody_ptr->{address } = $TicketHash_ptr->{WIND_Indirizzo} ;
-		$ReqBody_ptr->{prov} = $TicketHash_ptr->{WIND_Provincia} ;
-		$ReqBody_ptr->{city} = $TicketHash_ptr->{WIND_Comune} ;
-		$ReqBody_ptr->{cap} = $TicketHash_ptr->{WIND_CAP} ;
+		$ReqBody_ptr->{address } = $TicketHash_ptr->{WIND_Indirizzo} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_Indirizzo}));
+		$ReqBody_ptr->{prov} = $TicketHash_ptr->{WIND_Provincia} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_Provincia}));
+		$ReqBody_ptr->{city} = $TicketHash_ptr->{WIND_Comune} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_Comune}));
+		$ReqBody_ptr->{cap} = $TicketHash_ptr->{WIND_CAP} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{WIND_CAP}));
+		
+
+		
+
+
+
+
+	#debug
+	print "\nOK4\n" if($MS_DEBUG);
+		
+		#aggiungo la struttura per generare l'XML per la nota in uscita --> per la CREATE non valorizzo mai la nota ma 'Oggetto' e 'Descrizione'
+		MS_ArticleToListOfNotesStructure($TicketHash_ptr);
 	
-		$rit = 1;
+
+	
+	
+	
+		# ---------------------- Allegati -------------------------
+		# 0 -> KO (non esistono allegato per questo article, oppure errore generico)
+		# num > 0 -> OK (numero degli allegati trovati)
+		#
+		my $attachments_rit = MS_GetArticleAttachments($validArticleIdForWind, $MS_TicketObject_ptr, $TicketHash_ptr->{RequestHash});
+		#qui ho $TicketHash_ptr->{RequestHash}->{AttachedFiles}  che viene creato e popolato dalla sub precedente	
+	
+		
+		
+		
+		if($WindTicketType eq 'ALARM')
+		{
+			$ReqBody_ptr->{Type} = 'ALARM' ;
+			
+			$ReqBody_ptr->{startDateMalfunction} = $TicketHash_ptr->{FREETIME1} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{FREETIME1}));
+			$ReqBody_ptr->{endDateMalfunction} = $TicketHash_ptr->{FREETIME2} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{FREETIME2}));
+		}
+
+		$rit = 1;			
 	}
+	elsif(($actionType eq 'REOPEN' and $WindTicketType eq 'INCIDENT') or (($actionType eq 'UPDATE' or $actionType eq 'UPDATE_NO_NEW_ARTICLE') and $WindTicketType eq 'ALARM') ) #Reopen permessa solo per gli Incident e Update permessa solo per gli Alarm e Update (senza invio della nota e degli allegati) permessa solo per gli Alarm
+	{
+		#$ReqHash_ptr->{RequestType} = 1; #Create
+		$ReqHash_ptr->{RequestType} = 2; #Update
+		#$ReqHash_ptr->{RequestType} = 3; #Notify
+		#$ReqHash_ptr->{RequestType} = ?  #unknow
+		
+		
+		$ReqHeader_ptr->{SourceChannel} = 'OTRS' ;
+		$ReqHeader_ptr->{DestinationChannel} = 'WIND' ;
+		$ReqHeader_ptr->{TimeStamp} = _MS_CalcTimestamp('TimeStamp') ;
+		$ReqHeader_ptr->{TransactionId} = _MS_CalcTimestamp('TransactionId') ;
+		$ReqHeader_ptr->{BusinessId} = 'unknow' ; #TODO: valorizzare con i valori attesi da EAI 
+		
+		$ReqBody_ptr->{TicketID} = $TicketHash_ptr->{TN} ; #ATTENZIONE: mandiamo fuori in TN e non l'ID !!!
+		$ReqBody_ptr->{TickedIDWind} = $TicketHash_ptr->{FREETEXT9} ;
+		$ReqBody_ptr->{Type} = 'INCIDENT' ;
+		
+		$ReqBody_ptr->{Action} = 'REOPEN' ; 
+		$ReqBody_ptr->{Status} = MS_OtrsTicketStateIDToWindStatus($TicketHash_ptr->{PM_Wind_settings}, $TicketHash_ptr->{TICKET_STATE_ID}) ;
+		$ReqBody_ptr->{priority} = $TicketHash_ptr->{TICKET_PRIORITY_ID} ;
+		$ReqBody_ptr->{CategoryTT} = $TicketHash_ptr->{FREETEXT15} ;
+		$ReqBody_ptr->{AmbitoTT} = $TicketHash_ptr->{WIND_AMBITOTT} ;
+		$ReqBody_ptr->{TimestampTT} = _MS_CalcTimestamp('TimestampTT') ;
+
+		
+		if ($actionType ne 'UPDATE_NO_NEW_ARTICLE')
+		{
+			# ---------------------- Nota -------------------------
+			my $validArticleIdForWind = $TicketHash_ptr->{WIND_VALID_ARTICLE_ID};
+			$TicketHash_ptr->{_ARTICLE} = {};
+			
+			# 0 -> KO (article non esiste, oppure errore generico)
+			# 1 -> OK (article trovato)
+			my $article_rit = MS_ArticleGetInfo($validArticleIdForWind, $MS_DBObject_ptr, $TicketHash_ptr->{_ARTICLE});
+			if (!$article_rit)
+			{
+				return $rit;
+			}
+			
+			#aggiungo la struttura per generare l'XML per la nota in uscita --> per la CREATE non valorizzo mai la nota ma 'Oggetto' e 'Descrizione'
+			MS_ArticleToListOfNotesStructure($TicketHash_ptr);
+		
+	
+		
+			# ---------------------- Allegati -------------------------
+			# 0 -> KO (non esistono allegato per questo article, oppure errore generico)
+			# num > 0 -> OK (numero degli allegati trovati)
+			#
+			my $attachments_rit = MS_GetArticleAttachments($validArticleIdForWind, $MS_TicketObject_ptr, $TicketHash_ptr->{RequestHash});
+			#qui ho $TicketHash_ptr->{RequestHash}->{AttachedFiles}  che viene creato e popolato dalla sub precedente
+		}
+		
+
+		
+		if($WindTicketType eq 'ALARM')
+		{
+			$ReqBody_ptr->{Type} = 'ALARM' ;
+			
+			$ReqBody_ptr->{Action} = 'UPDATE' ;
+			
+			$ReqBody_ptr->{startDateMalfunction} = $TicketHash_ptr->{FREETIME1} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{FREETIME1}));
+			$ReqBody_ptr->{endDateMalfunction} = $TicketHash_ptr->{FREETIME2} if(_MS_RequestBuild_HANDLER___checkIfFieldExists($TicketHash_ptr->{FREETIME2}));
+		}
+
+	
+		$rit = 1;			
+	}
+	elsif( ($actionType eq 'NOTIFY' or $actionType eq 'NOTIFY_NO_NEW_ARTICLE') and $WindTicketType eq 'ALARM') #Notify permessa solo per gli Alarm e Notify (senza invio della nota e degli allegati) permessa solo
+	{
+		#$ReqHash_ptr->{RequestType} = 1; #Create
+		#$ReqHash_ptr->{RequestType} = 2; #Update
+		$ReqHash_ptr->{RequestType} = 3; #Notify
+		#$ReqHash_ptr->{RequestType} = ?  #unknow
+		
+		
+		$ReqHeader_ptr->{SourceChannel} = 'OTRS' ;
+		$ReqHeader_ptr->{DestinationChannel} = 'WIND' ;
+		$ReqHeader_ptr->{TimeStamp} = _MS_CalcTimestamp('TimeStamp') ;
+		$ReqHeader_ptr->{TransactionId} = _MS_CalcTimestamp('TransactionId') ;
+		$ReqHeader_ptr->{BusinessId} = 'unknow' ; #TODO: valorizzare con i valori attesi da EAI 
+		
+		$ReqBody_ptr->{TicketID} = $TicketHash_ptr->{TN} ; #ATTENZIONE: mandiamo fuori in TN e non l'ID !!!
+		$ReqBody_ptr->{TickedIDWind} = $TicketHash_ptr->{FREETEXT9} ;
+		$ReqBody_ptr->{Type} = 'ALARM' ;
+		
+		$ReqBody_ptr->{Action} = 'CLOSE' ; #possibile che sia l'unica possibile per le Notify sugli ALARM??
+		$ReqBody_ptr->{Status} = MS_OtrsTicketStateIDToWindStatus($TicketHash_ptr->{PM_Wind_settings}, $TicketHash_ptr->{TICKET_STATE_ID}) ;
+		#$ReqBody_ptr->{Causale} = ''; #per quanto riguarda gli ALARM mi sembra priva di significato...
+		
+		$ReqBody_ptr->{priority} = $TicketHash_ptr->{TICKET_PRIORITY_ID} ;
+		$ReqBody_ptr->{CategoryTT} = $TicketHash_ptr->{FREETEXT15} ;
+		$ReqBody_ptr->{AmbitoTT} = $TicketHash_ptr->{WIND_AMBITOTT} ;
+		$ReqBody_ptr->{TimestampTT} = _MS_CalcTimestamp('TimestampTT') ;
+
+		
+		if ($actionType ne 'UPDATE_NO_NEW_ARTICLE')
+		{
+			# ---------------------- Nota -------------------------
+			my $validArticleIdForWind = $TicketHash_ptr->{WIND_VALID_ARTICLE_ID};
+			$TicketHash_ptr->{_ARTICLE} = {};
+			
+			# 0 -> KO (article non esiste, oppure errore generico)
+			# 1 -> OK (article trovato)
+			my $article_rit = MS_ArticleGetInfo($validArticleIdForWind, $MS_DBObject_ptr, $TicketHash_ptr->{_ARTICLE});
+			if (!$article_rit)
+			{
+				return $rit;
+			}
+			
+			#aggiungo la struttura per generare l'XML per la nota in uscita --> per la CREATE non valorizzo mai la nota ma 'Oggetto' e 'Descrizione'
+			MS_ArticleToListOfNotesStructure($TicketHash_ptr);
+		
+	
+		
+			# ---------------------- Allegati -------------------------
+			# 0 -> KO (non esistono allegato per questo article, oppure errore generico)
+			# num > 0 -> OK (numero degli allegati trovati)
+			#
+			my $attachments_rit = MS_GetArticleAttachments($validArticleIdForWind, $MS_TicketObject_ptr, $TicketHash_ptr->{RequestHash});
+			#qui ho $TicketHash_ptr->{RequestHash}->{AttachedFiles}  che viene creato e popolato dalla sub precedente
+		}
+
+	
+		$rit = 1;			
+	}
+	
+	#debug
+	print "\nRit di _MS_RequestBuild_HANDLER = $rit\n" if($MS_DEBUG);
 	
 	return $rit;
 }
@@ -365,61 +584,13 @@ sub MS_RequestBuild_Create_Incident
 
 
 
-#Info:
-#
-# input:
-#     xxxxxx
-#
-# output:
-#     <nulla>
-#
-# Nota:xxxxxxxxxxx
-#
-sub MS_RequestBuild_Create_Alarm
-{
-	
-
-}
 
 
 
 
 
-#Info:
-#
-# input:
-#     xxxxxx
-#
-# output:
-#     <nulla>
-#
-# Nota:xxxxxxxxxxx
-#
-sub MS_RequestBuild_Update_Alarm
-{
-	
-
-}
 
 
-
-
-
-#Info:
-#
-# input:
-#     xxxxxx
-#
-# output:
-#     <nulla>
-#
-# Nota:xxxxxxxxxxx
-#
-sub MS_RequestBuild_Notify_Alarm
-{
-	
-
-}
 
 
 
@@ -482,7 +653,7 @@ sub MS_RequestSend
 
 	
 
-	
+	return $rit;
 }
 
 
@@ -508,11 +679,20 @@ sub _MS_RequestBuildAndSend_HANDLER
 	
 	if ($result)
 	{
+				#debug
+				print "\nZZZ1_A\n" if($MS_DEBUG);		
+		
 		$result = MS_RequestSend($TicketHash_ptr);
 		if ($result)
 		{
+				#debug
+				print "\nZZZ1_B\n" if($MS_DEBUG);			
+			
 			if(exists($TicketHash_ptr->{ResponseHash}->{ResponseContent}))
 			{
+				#debug
+				print "\nZZZ1_C\n" if($MS_DEBUG);				
+				
 				$TicketHash_ptr->{Errors} = {};
 				$TicketHash_ptr->{Errors}->{StopEsecution} = 0;
 				$TicketHash_ptr->{Errors}->{InternalCode} = 0;
@@ -548,6 +728,9 @@ sub _MS_RequestBuildAndSend_HANDLER
 				$TicketHash_ptr->{OTRS_LogObject} = $MS_TicketObject_ptr->{LogObject};
 
 
+				#debug
+				print "\nZZZ1\n" if($MS_DEBUG);
+
 				#proviamo a fare il parsing
 				my $XMLHash_ptr = MS_XMLCheckParsing($TicketHash_ptr, $TicketHash_ptr->{ResponseHash}->{ResponseContent});
 				
@@ -556,10 +739,17 @@ sub _MS_RequestBuildAndSend_HANDLER
 				{
 					MS_ResponseToResponseHash($TicketHash_ptr, $XMLHash_ptr) ;
 					
+					#debug
+					print "\nZZZ2\n" if($MS_DEBUG);
+					
 					# 0 => KO.... 1 => OK
 					my $response_result = MS_CheckResponseFromWind($TicketHash_ptr, $RequestType);
 					if ($response_result) #risposta FORMALMENTE corretta
 					{
+						
+						#debug
+						print "\nZZZ3\n" if($MS_DEBUG);
+					
 						if (!exists($TicketHash_ptr->{ResponseHash}->{ResponseErrorCode}) or (exists($TicketHash_ptr->{ResponseHash}->{ResponseErrorCode}) and $TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} == 0) )
 						{
 							#non ci sono errori da segnalare
@@ -568,7 +758,7 @@ sub _MS_RequestBuildAndSend_HANDLER
 						else
 						{
 							#Wind mi ha inviato un errore..
-						$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] La Response arrivata da Wind/EAI mi segnala errore: ResponseErrorCode = $TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} - ResponseErrorMessage = $TicketHash_ptr->{ResponseHash}->{ResponseErrorMessage} \n");	
+							$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [ERRORE] La Response arrivata da Wind/EAI mi segnala errore: ResponseErrorCode = $TicketHash_ptr->{ResponseHash}->{ResponseErrorCode} - ResponseErrorMessage = $TicketHash_ptr->{ResponseHash}->{ResponseErrorMessage} \n");	
 							$rit = 0;
 						}
 						
@@ -633,9 +823,13 @@ sub MS_RequestBuildAndSend
 	
 	if($WindTicketType =~ m/^INCIDENT$/i)
 	{
-		if ($RequestType =~ m/^CREATE$/i) #unico possibile per gli Incident/SR
+		if ($RequestType =~ m/^CREATE$/i) # possibile per gli Incident/SR
 		{
-			$result = MS_RequestBuild_Create_Incident($ticketID, 0, $MS_TicketObject_ptr, $TicketHash_ptr);
+			$result = _MS_RequestBuild_HANDLER($ticketID, 0, $MS_TicketObject_ptr, 'CREATE', 'INCIDENT', $TicketHash_ptr);
+		}
+		elsif ($RequestType =~ m/^REOPEN$/i) # possibile per gli Incident/SR
+		{
+			$result = _MS_RequestBuild_HANDLER($ticketID, 0, $MS_TicketObject_ptr, 'REOPEN', 'INCIDENT', $TicketHash_ptr);
 		}
 		else
 		{
@@ -647,15 +841,23 @@ sub MS_RequestBuildAndSend
 	{
 		if ($RequestType =~ m/^CREATE$/i) #unico possibile per gli Incident/SR
 		{
-			$result = MS_RequestBuild_Create_Alarm($ticketID, 0, $MS_TicketObject_ptr, $TicketHash_ptr);
+			$result = _MS_RequestBuild_HANDLER($ticketID, 0, $MS_TicketObject_ptr, 'CREATE', 'ALARM', $TicketHash_ptr);
 		}
-		elsif ($RequestType =~ m/^UPDATE$/i) #unico possibile per gli Incident/SR
+		elsif ($RequestType =~ m/^UPDATE$/i) 
 		{
-			$result = MS_RequestBuild_Update_Alarm($ticketID, 0, $MS_TicketObject_ptr, $TicketHash_ptr);
+			$result = _MS_RequestBuild_HANDLER($ticketID, 0, $MS_TicketObject_ptr, 'UPDATE', 'ALARM', $TicketHash_ptr);
 		}
-		elsif ($RequestType =~ m/^NOTIFY$/i) #unico possibile per gli Incident/SR
+		elsif ($RequestType =~ m/^UPDATE_NO_NEW_ARTICLE$/i) 
 		{
-			$result = MS_RequestBuild_Notify_Alarm($ticketID, 0, $MS_TicketObject_ptr, $TicketHash_ptr);
+			$result = _MS_RequestBuild_HANDLER($ticketID, 0, $MS_TicketObject_ptr, 'UPDATE_NO_NEW_ARTICLE', 'ALARM', $TicketHash_ptr);
+		}
+		elsif ($RequestType =~ m/^NOTIFY$/i) 
+		{
+			$result = _MS_RequestBuild_HANDLER($ticketID, 0, $MS_TicketObject_ptr, 'NOTIFY', 'ALARM', $TicketHash_ptr);
+		}
+		elsif ($RequestType =~ m/^NOTIFY_NO_NEW_ARTICLE$/i) 
+		{
+			$result = _MS_RequestBuild_HANDLER($ticketID, 0, $MS_TicketObject_ptr, 'NOTIFY_NO_NEW_ARTICLE', 'ALARM', $TicketHash_ptr);
 		}
 		else
 		{
@@ -673,6 +875,9 @@ sub MS_RequestBuildAndSend
 						TicketHash_ptr => $TicketHash_ptr,
 						OTRS_XMLObject_ptr => $OTRS_XMLObject_ptr,
 						});
+
+		#debug
+		print "\result in MS_RequestBuildAndSend = $result\n" if($MS_DEBUG);
 		
 		if ($result)
 		{
@@ -695,13 +900,13 @@ sub MS_RequestBuildAndSend
 
 	if (exists($TicketHash_ptr->{PM_Wind_settings}->{log_level}) and $TicketHash_ptr->{PM_Wind_settings}->{log_level} > 2)
 	{
-		$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [INFO] TicketHash_ptr =\n".Data::Dumper($TicketHash_ptr)."\n");	
+		$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [INFO] TicketHash_ptr =\n".Dumper($TicketHash_ptr)."\n");	
 	}
 	elsif (exists($TicketHash_ptr->{PM_Wind_settings}->{log_level}) and $TicketHash_ptr->{PM_Wind_settings}->{log_level} > 1)
 	{
-		$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [INFO] Request=\n".Data::Dumper($TicketHash_ptr->{RequestHash}->{RequestContent})."\n") if(exists($TicketHash_ptr->{RequestHash}->{RequestContent}));
+		$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [INFO] Request=\n".Dumper($TicketHash_ptr->{RequestHash}->{RequestContent})."\n") if(exists($TicketHash_ptr->{RequestHash}->{RequestContent}));
 		
-		$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [INFO] Response=\n".Data::Dumper($TicketHash_ptr->{ResponseHash}->{ResponseContent})."\n") if(exists($TicketHash_ptr->{ResponseHash}->{ResponseContent}));	
+		$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [INFO] Response=\n".Dumper($TicketHash_ptr->{ResponseHash}->{ResponseContent})."\n") if(exists($TicketHash_ptr->{ResponseHash}->{ResponseContent}));	
 	}
 	
 	

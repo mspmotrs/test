@@ -55,7 +55,9 @@ sub MS_XMLCheckParsing
 										#setto l'errore che verra' controllato nella subroutine a monte...
 										MS_AssignInternalErrorCode( MS_WhoAmI(), 10, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
 										$MS_ConfigHash_ptr->{Errors}->{StopEsecution} = 1; # "prenoto" una exit
-      
+
+										$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "_MSFull_ XML DUMP:\n".$XML_content);
+										
 										#Non forzo la exit qui... lo faro' solo nella gestione dell'errore (modulo MSErrorUtil)
 										#die $x;
 									};
@@ -82,6 +84,10 @@ sub MS_XMLCheckParsing
 			MS_AssignInternalErrorCode( MS_WhoAmI(), 20, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
 			$MS_ConfigHash_ptr->{Errors}->{StopEsecution} = 1; # "prenoto" una exit
 			
+			
+			
+			$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "_MSFull_ XML DUMP:\n".$XML_content);
+										
 			#Non forzo la exit qui... lo faro' solo nella gestione dell'errore (modulo MSErrorUtil)
 			#exit(1);
 		}
@@ -96,6 +102,17 @@ sub MS_XMLCheckParsing
 			@XMLHash = $MS_ConfigHash_ptr->{OTRS_XMLObject}->XMLStructure2XMLHash(XMLStructure => \@XMLStructure);
 			#@{$XMLHash_ptr} = $MS_ConfigHash_ptr->{OTRS_XMLObject}->XMLStructure2XMLHash(XMLStructure => \@XMLStructure);
 		
+			#se il log_level lo consente loggo la risposta
+			if (!exists($MS_ConfigHash_ptr->{OTRS_ConfigObject}) or !defined($MS_ConfigHash_ptr->{OTRS_ConfigObject}))
+			{
+				$MS_ConfigHash_ptr->{OTRS_ConfigObject} = $MS_ConfigHash_ptr->{OTRS_XMLObject}->{ConfigObject};
+			}
+			
+			my $logConf = $MS_ConfigHash_ptr->{OTRS_ConfigObject}->Get( 'PM_Wind_settings' );
+			if(exists($logConf->{log_level}) and $logConf->{log_level} >2)
+			{
+				$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "_MSFull_ XML DUMP:\n".$XML_content);
+			}
 		
 			return \@XMLHash;
 			#exit(0);

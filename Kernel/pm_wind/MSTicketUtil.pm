@@ -6,7 +6,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 # Exporting the saluta routine
-our @EXPORT = qw(MS_TicketGetInfoShort MS_TicketGetWindType MS_TicketGetWindPermission MS_Check_Category MS_CreateAlarm MS_AddArticleToTicket MS_AddAttachmentToArticle MS_CheckIfExistsFreshArticleForWind MS_CheckIfAlarmIsOkForCreate MS_CheckIfIncidentOrSrIsOkForCreate);
+our @EXPORT = qw(MS_TicketGetInfoShort MS_TicketGetWindType MS_TicketGetWindPermission MS_Check_Category MS_CreateAlarm MS_AddArticleToTicket MS_AddAttachmentToArticle MS_CheckIfExistsFreshArticleForWind MS_CheckIfAlarmIsOkForCreate MS_CheckIfIncidentOrSrIsOkForCreate MS_CheckIfExistsAlarmArticleForWind MS_ArticleGetInfo MS_GetArticleAttachments);
 # Exporting the saluta2 routine on demand basis.
 #our @EXPORT_OK = qw(saluta2);
 
@@ -19,6 +19,8 @@ use lib "$Bin";
 use lib "$Bin/..";
 use lib "$Bin/../cpan-lib";
 
+# ----------------- Attiva/disattiva debug per sviluppo ------------------
+my $MS_DEBUG = 1; # 0 -> disattivato, 1 -> attivato
 
 
 
@@ -807,16 +809,16 @@ sub MS_AddAttachmentToArticle
 #
 sub MS_GetValidArticleIdForAlarm
 {
-	my $articleID = shift;
+	my $alarmID = shift;
    my $MS_DBObject_ptr = shift;
 
 	my $rit = -1;
 	
-	if (defined($articleID) and ($articleID !~ m/^\s*$/) and ($articleID > 0) and defined($MS_DBObject_ptr) )
+	if (defined($alarmID) and ($alarmID !~ m/^\s*$/) and ($alarmID > 0) and defined($MS_DBObject_ptr) )
 	{
 		my $query = 'SELECT MAX(id) as id ';
 		$query .= ' FROM article ';
-		$query .= " WHERE ticket_id=$articleID ";
+		$query .= " WHERE ticket_id=$alarmID ";
 		
 		eval 
 		{  
@@ -988,6 +990,9 @@ sub MS_GetArticleAttachments
 			my $count = 0;
 			foreach my $key (keys(%IndexOfAttachments))
 			{
+				#salto l'allegato di default sempre presente
+				next if ($key eq '1');
+				
 				
 				#get article attachment (Content, ContentType, Filename and optional ContentID, ContentAlternative) 
 				%{$AttachmentsHashContainer_ptr->{AttachedFiles}->[$count]} = $MS_TicketObject_ptr->ArticleAttachment(
@@ -1042,74 +1047,181 @@ sub MS_GetArticleAttachments
 sub MS_SplitMergedFields
 {
 	my $TicketHash_ptr = shift;
+	
+	my $normalSeparator = '\|'; #Attenzione all'escape per il pipe
+	my $specialSeparator = '_#_'; #TODO........ 19/12/2013
 
 	my $rit = 0;
 	
 	if(exists($TicketHash_ptr->{FREETEXT2}) and exists($TicketHash_ptr->{FREETEXT3}) and exists($TicketHash_ptr->{FREETEXT10}) and exists($TicketHash_ptr->{FREETEXT11}))
 	{
 		# FREETEXT2 -> MSISDN | ID LINEA
-		my @MS_campi2 = split(/|/, $TicketHash_ptr->{FREETEXT2});
-		$TicketHash_ptr->{WIND_MSISDN} = $MS_campi2[0];
-		$TicketHash_ptr->{WIND_ID_LINEA} = $MS_campi2[1];
-		if (scalar(@MS_campi2) < 2) #1 oppure 0
+		# Nota: nella vecchia GUI esisteva solo MSISDN
+		my @MS_campi2 ;
+		@MS_campi2 = split($normalSeparator, $TicketHash_ptr->{FREETEXT2}) if(defined($TicketHash_ptr->{FREETEXT2}));
+
+		if (scalar(@MS_campi2) == 1) #solo MSISDN
 		{
-			$TicketHash_ptr->{WIND_FREETEXT2_SPLITTED} = 0; #non c'era niente da dividere
+			$TicketHash_ptr->{WIND_FREETEXT2_SPLITTED} = 1; 
+			
+			$TicketHash_ptr->{WIND_MSISDN} = $MS_campi2[0];
+			$TicketHash_ptr->{WIND_ID_LINEA} = '';
 		}
-		else
+		elsif(scalar(@MS_campi2) == 2) # MSISDN e ID LINEA
 		{
 			$TicketHash_ptr->{WIND_FREETEXT2_SPLITTED} = 1;
+			
+			$TicketHash_ptr->{WIND_MSISDN} = $MS_campi2[0];
+			$TicketHash_ptr->{WIND_ID_LINEA} = $MS_campi2[1];
 		}
-		
+		else  # 0 valori oppure > 2 campi (errore operatore)
+		{
+			$TicketHash_ptr->{WIND_FREETEXT2_SPLITTED} = 0; #non c'era niente da dover dividere
+			
+			$TicketHash_ptr->{WIND_MSISDN} = '';
+			$TicketHash_ptr->{WIND_ID_LINEA} = '';
+		}		
 		 
 		
-		# FREETEXT3 -> IMSI | ICCID | IMEI
-		my @MS_campi3 = split(/|/, $TicketHash_ptr->{FREETEXT3});
-		$TicketHash_ptr->{WIND_IMSI} = $MS_campi3[0];
-		$TicketHash_ptr->{WIND_ICCID} = $MS_campi3[1];
-		$TicketHash_ptr->{WIND_IMEI} = $MS_campi3[2];
-		if (scalar(@MS_campi3) < 2) #1 oppure 0
+		
+		
+		
+		# FREETEXT3 -> IMSI | ICCID _#_ IMEI
+		# Nota: nella vecchia GUI esisteva IMSI | ICCID
+		my @MS_campi3;
+		@MS_campi3 = split($specialSeparator, $TicketHash_ptr->{FREETEXT3}) if(defined($TicketHash_ptr->{FREETEXT3}));
+
+		if (scalar(@MS_campi3) == 2 or scalar(@MS_campi3) == 1) #IMSI | ICCID _#_ IMEI   oppure  #IMSI | ICCID  ma niente IMEI
 		{
-			$TicketHash_ptr->{WIND_FREETEXT3_SPLITTED} = 0; #non c'era niente da dividere
+			$TicketHash_ptr->{WIND_FREETEXT3_SPLITTED} = 1; 
+			$TicketHash_ptr->{WIND_IMEI} = '';
+			
+			my @MS_campi3_BIS = split($normalSeparator, $MS_campi3[0]);
+			
+			if (scalar(@MS_campi3_BIS) == 1) #ho solo IMSI 
+			{	
+				$TicketHash_ptr->{WIND_IMSI} = $MS_campi3_BIS[0];
+				$TicketHash_ptr->{WIND_ICCID} = '';
+			}			
+			elsif (scalar(@MS_campi3_BIS) == 2) #ho IMSI e ICCID
+			{	
+				$TicketHash_ptr->{WIND_IMSI} = $MS_campi3_BIS[0];
+				$TicketHash_ptr->{WIND_ICCID} = $MS_campi3_BIS[1];
+			}
+			else
+			{
+				$TicketHash_ptr->{WIND_IMSI} = '';
+				$TicketHash_ptr->{WIND_ICCID} = '';				
+			}
+			
+
+			$TicketHash_ptr->{WIND_IMEI} = $MS_campi3[1] if (scalar(@MS_campi3) == 2);
 		}
 		else
 		{
-			$TicketHash_ptr->{WIND_FREETEXT3_SPLITTED} = 1;
+			$TicketHash_ptr->{WIND_FREETEXT3_SPLITTED} = 0; 
+			$TicketHash_ptr->{WIND_IMSI} = '';
+			$TicketHash_ptr->{WIND_ICCID} = '';				
+			$TicketHash_ptr->{WIND_IMEI} = '';			
 		}
 		
 		
 		
-		# FREETEXT10 -> AMBITO TT | TIPO LINEA | MNP TYPE
-		my @MS_campi10 = split(/|/, $TicketHash_ptr->{FREETEXT10});
-		$TicketHash_ptr->{WIND_AMBITOTT} = $MS_campi10[0];
-		$TicketHash_ptr->{WIND_TIPO_LINEA} = $MS_campi10[1];
-		$TicketHash_ptr->{WIND_MNP_TYPE} = $MS_campi10[2];
-		if (scalar(@MS_campi10) < 2) #1 oppure 0
+		
+		
+		
+		
+		# FREETEXT10 -> AMBITO TT | TIPO LINEA _#_ MNP TYPE
+		# Nota: nella vecchia gui esisteva il campo VF_servizio | VF_descrizione... quisndi completamente disgiunto dai 3 valori ambito full
+		#       Vuol dire che in ambito full trovero' sempre i 3 valori cosi' oppure nulla
+		my @MS_campi10;
+		@MS_campi10 = split($specialSeparator, $TicketHash_ptr->{FREETEXT10}) if(defined($TicketHash_ptr->{FREETEXT10}));
+
+		if (scalar(@MS_campi10) == 2 ) # AMBITO TT | TIPO LINEA _#_ MNP TYPE 
 		{
-			$TicketHash_ptr->{WIND_FREETEXT10_SPLITTED} = 0; #non c'era niente da dividere
+			$TicketHash_ptr->{WIND_FREETEXT10_SPLITTED} = 1; 
+			
+			my @MS_campi10_BIS = split($normalSeparator, $MS_campi10[0]);
+			
+			if (scalar(@MS_campi10_BIS) == 1) #ho solo AMBITO TT 
+			{	
+				$TicketHash_ptr->{WIND_AMBITOTT} = $MS_campi10_BIS[0];
+				$TicketHash_ptr->{WIND_TIPO_LINEA} = '';
+			}			
+			elsif (scalar(@MS_campi10_BIS) == 2) #ho AMBITO TT e TIPO LINEA
+			{	
+				$TicketHash_ptr->{WIND_AMBITOTT} = $MS_campi10_BIS[0];
+				$TicketHash_ptr->{WIND_TIPO_LINEA} = $MS_campi10_BIS[0];
+			}
+			else
+			{
+				$TicketHash_ptr->{WIND_AMBITOTT} = '';
+				$TicketHash_ptr->{WIND_TIPO_LINEA} = '';				
+			}
+			
+
+			$TicketHash_ptr->{WIND_MNP_TYPE} = $MS_campi10[1] ;
 		}
 		else
 		{
-			$TicketHash_ptr->{WIND_FREETEXT10_SPLITTED} = 1;
-		}
+			$TicketHash_ptr->{WIND_FREETEXT10_SPLITTED} = 0; 
+			$TicketHash_ptr->{WIND_AMBITOTT} = '';
+			$TicketHash_ptr->{WIND_TIPO_LINEA} = '';				
+			$TicketHash_ptr->{WIND_MNP_TYPE} = '';			
+		}		
+		
+		
+
 		
 		
 		
-		# FREETEXT11 -> Indirizzo | Provincia | Comune | CAP
-		my @MS_campi11 = split(/|/, $TicketHash_ptr->{FREETEXT11});
-		$TicketHash_ptr->{WIND_Indirizzo} = $MS_campi11[0];
-		$TicketHash_ptr->{WIND_Provincia} = $MS_campi11[1];
-		$TicketHash_ptr->{WIND_Comune} = $MS_campi11[2];
-		$TicketHash_ptr->{WIND_CAP} = $MS_campi11[3];
-		if (scalar(@MS_campi11) < 2) #1 oppure 0
-		{
-			$TicketHash_ptr->{WIND_FREETEXT11_SPLITTED} = 0; #non c'era niente da dividere
-		}
-		else
+		# FREETEXT11 ->  Comune | Provincia | Indirizzo _#_ CAP
+		# Nota: nella vecchia GUI esisteva il campo VF_citta' | VF_Provincia | VF_Via
+		my @MS_campi11;		
+		@MS_campi11 = split($specialSeparator, $TicketHash_ptr->{FREETEXT11}) if(defined($TicketHash_ptr->{FREETEXT11}));
+
+		if (scalar(@MS_campi11) == 2 or scalar(@MS_campi11) == 1) 
 		{
 			$TicketHash_ptr->{WIND_FREETEXT11_SPLITTED} = 1;
+			$TicketHash_ptr->{WIND_CAP} = '';
+			
+			my @MS_campi11_BIS = split($normalSeparator, $MS_campi11[0]);
+			
+			if (scalar(@MS_campi11_BIS) == 1)  # Comune 
+			{
+				$TicketHash_ptr->{WIND_Comune} = $MS_campi11_BIS[0];
+				$TicketHash_ptr->{WIND_Provincia} = '';
+				$TicketHash_ptr->{WIND_Indirizzo} = '';
+			}			
+			elsif (scalar(@MS_campi11_BIS) == 2) # Comune | Provincia
+			{	
+				$TicketHash_ptr->{WIND_Comune} = $MS_campi11_BIS[0];
+				$TicketHash_ptr->{WIND_Provincia} = $MS_campi11_BIS[1];
+				$TicketHash_ptr->{WIND_Indirizzo} = '';
+			}
+			elsif (scalar(@MS_campi11_BIS) == 3) # Comune | Provincia | Indirizzo
+			{	
+				$TicketHash_ptr->{WIND_Comune} = $MS_campi11_BIS[0];
+				$TicketHash_ptr->{WIND_Provincia} = $MS_campi11_BIS[1];
+				$TicketHash_ptr->{WIND_Indirizzo} = $MS_campi11_BIS[2];
+			}
+			else
+			{
+				$TicketHash_ptr->{WIND_Comune} = '';			
+				$TicketHash_ptr->{WIND_Provincia} = '';
+				$TicketHash_ptr->{WIND_Indirizzo} = '';				
+			}
+			
+
+			$TicketHash_ptr->{WIND_CAP} = $MS_campi11[1] if(scalar(@MS_campi11) == 2);
 		}
-		
-		
+		else
+		{
+			$TicketHash_ptr->{WIND_Comune} = '';			
+			$TicketHash_ptr->{WIND_Provincia} = '';
+			$TicketHash_ptr->{WIND_Indirizzo} = '';
+			$TicketHash_ptr->{WIND_CAP} = '';		
+		}		
 		
 		
 		$rit = 1;
@@ -1132,6 +1244,104 @@ sub MS_SplitMergedFields
 
 
 
+
+
+
+
+
+
+
+##############################################################################
+# Richiamata per testare se un certo ticket di tipo Alert (viene fatto un controllo su questo aspetto) possiede almeno una nota.
+# Se trova piu' di una nota valida per quel ticket considera SOLO la piu' recente
+#
+# Output:
+#   -1  -> l'Alert non posside note - oppure - errore generico
+#   numero > 0  -> e' l' articleID che indica la nota valida per Wind
+#
+#
+sub MS_CheckIfExistsAlarmArticleForWind
+{
+	my $TicketID = shift;
+   my $MS_DBObject_ptr = shift;
+	my $TicketHash_ptr = shift; # opzionale
+		
+	my $rit = -1;
+	
+	my $MS_ConfigObject_ptr = $MS_DBObject_ptr->{ConfigObject};
+	my $MS_LogObject_ptr = $MS_DBObject_ptr->{LogObject};
+	
+	$TicketHash_ptr = {} if(!defined($TicketHash_ptr));
+
+	#Controllo la configurazione specifica...
+	#if(!exists($TicketHash_ptr->{PM_Wind_settings}->{article_typeID_ToWind}))
+	if(!exists($TicketHash_ptr->{PM_Wind_settings}->{ticketTypeID_AlarmToWind}))
+	{
+		MS_LoadAndCheckConfigForWind($TicketHash_ptr, $MS_ConfigObject_ptr);
+	}
+	
+	#Tipo di nota
+	#my $article_typeID_ToWind = $TicketHash_ptr->{PM_Wind_settings}->{article_typeID_ToWind};
+	
+	#Tipo di ticket (Alarm per Wind)
+	my $ticket_typeID_AlarmToWind = $TicketHash_ptr->{PM_Wind_settings}->{ticketTypeID_AlarmToWind};
+
+	
+	my $query = 'SELECT id ';
+	$query .= ' FROM ticket ';
+	$query .= " WHERE ticket_id=$TicketID and type_id=$ticket_typeID_AlarmToWind ";
+	
+	eval 
+	{  
+		$MS_DBObject_ptr->Prepare(
+			  SQL   => $query,
+			  Limit => 1
+		 );
+		 my @Row = $MS_DBObject_ptr->FetchrowArray();
+		 
+		 unless(scalar(@Row) and $TicketID == $Row[0])
+		 {			
+			$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [WARNING] Il ticket $TicketID non  di tipo ALARM per WIND (type_id = $ticket_typeID_AlarmToWind). Non posso richiedere la nota da mandare a Wind");	
+		 }
+	};
+	if($@)
+	{
+		#gestione errore
+		$rit = -1;
+	}
+	
+	
+	$query = 'SELECT MAX(id) as id ';
+	$query .= ' FROM article ';
+	$query .= " WHERE ticket_id=$TicketID ";
+	
+	eval 
+	{  
+		$MS_DBObject_ptr->Prepare(
+			  SQL   => $query,
+			  Limit => 1
+		 );
+		 my @Row = $MS_DBObject_ptr->FetchrowArray();
+		 
+		 if (scalar(@Row))
+		 {			
+			$rit = $Row[0];
+		 }
+		 else
+		 {
+			$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [WARNING] Per il ticket $TicketID (Alarm per Wind) non trovo una nota valida (oppure errore durante la ricerca della nota stessa)");					
+		 }
+	};
+	if($@)
+	{
+		#gestione errore
+		$rit = -1;
+	}
+	
+	
+		
+	return $rit;
+}
 
 
 
@@ -1163,7 +1373,7 @@ sub MS_CheckIfExistsFreshArticleForWind
 	my $rit = -1;
 	
 	my $MS_ConfigObject_ptr = $MS_DBObject_ptr->{ConfigObject};
-	my $MS_LogObject_ptr = $MS_DBObject_ptr->{LogObject};
+	my $MS_LogObject_ptr = $MS_DBObject_ptr->{LogObject};	
 	
 	$TicketHash_ptr = {} if(!defined($TicketHash_ptr));
 
@@ -1185,7 +1395,7 @@ sub MS_CheckIfExistsFreshArticleForWind
 	my $query = 'SELECT MAX(id) as id ';
 	$query .= ' FROM article ';
 	$query .= " WHERE ticket_id=$TicketID and article_type_id=$article_typeID_ToWind and incoming_time >= $firstValidTime ";
-	
+
 	eval 
 	{  
 		$MS_DBObject_ptr->Prepare(
@@ -1194,13 +1404,16 @@ sub MS_CheckIfExistsFreshArticleForWind
 		 );
 		 my @Row = $MS_DBObject_ptr->FetchrowArray();
 		 
-		 if (scalar(@Row))
-		 {			
+		 if (@Row and defined($Row[0]))
+		 {
 			$rit = $Row[0];
 		 }
 		 else
 		 {
-			$MS_LogObject_ptr->Log( Priority => 'warning', Message => "_MSFull_ [WARNING] Per il ticket $TicketID non esistono note per Wind all'interno dell'intervallo di validita' (now - $article_validityTime_ToWind secs)");					
+			if (exists($TicketHash_ptr->{PM_Wind_settings}->{log_level}) and $TicketHash_ptr->{PM_Wind_settings}->{log_level} > 1)
+			{
+				$MS_LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [WARNING] Per il ticket $TicketID non esistono note per Wind all'interno dell'intervallo di validita' (now - $article_validityTime_ToWind secs)");	
+			}
 		 }
 	};
 	if($@)
@@ -1210,7 +1423,6 @@ sub MS_CheckIfExistsFreshArticleForWind
 	}
 	
 	
-		
 	return $rit;
 }
 
@@ -1249,10 +1461,26 @@ sub _MS_CheckIfOkForCreate
 		
 	my $rit = 0;
 	
-	if( (!defined($TIPO) or $TIPO ne 'ALARM' or $TIPO ne 'INCIDENT/SR') or !defined($ticket_id_or_tn) or !defined($TicketID_is_a_TN) or !defined($MS_DBObject_ptr) )
+	#debug
+	if($MS_DEBUG)
+	{
+		#use Data::Dumper;
+		print "\nMSTicketUtil::_MS_CheckIfOkForCreate \n";
+		print "\nTIPO=$TIPO";
+		print "\nticket_id_or_tn=$ticket_id_or_tn";
+		print "\nTicketID_is_a_TN=$TicketID_is_a_TN";
+		#print "\n".Dumper($MS_DBObject_ptr)."\n";
+		#print "\n".Dumper($TicketHash_ptr)."\n";
+	}
+	
+	
+	if( (!defined($TIPO) or ($TIPO ne 'ALARM' and $TIPO ne 'INCIDENT/SR') ) or !defined($ticket_id_or_tn) or !defined($TicketID_is_a_TN) or !defined($MS_DBObject_ptr) )
 	{
 		return $rit; 
 	}
+	
+	#debug
+	print "\nMSTicketUtil::_MS_CheckIfOkForCreate: i dati in input sembrano OK.\n" if($MS_DEBUG);
 	
 	my $isAlarm = 0; #a = indica che si tratta di un INCIDENT/SR, ad 1 che si tratta di un ALARM
 	$isAlarm = 1 if($TIPO eq 'ALARM');
@@ -1267,9 +1495,15 @@ sub _MS_CheckIfOkForCreate
 	if ($result) #1 -> OK (ticket trovato)
 	{
 		$result = MS_SplitMergedFields($TicketHash_ptr);
+
+		#debug
+		print "\nMSTicketUtil::_MS_CheckIfOkForCreate: ho trovato i dati del ticket.\n" if($MS_DEBUG);
 		
 		if ($result)
 		{
+			#debug
+			print "\nMSTicketUtil::_MS_CheckIfOkForCreate: ho fatto lo split dei campi condivisi sul DB.\n" if($MS_DEBUG);
+			
 			#Controllo la configurazione specifica...
 			if(!exists($TicketHash_ptr->{PM_Wind_settings}))
 			{
@@ -1415,6 +1649,112 @@ sub MS_CheckIfIncidentOrSrIsOkForCreate
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+sub MS_OtrsTicketStateIDToWindStatus
+{
+	my $PM_Wind_settings_ptr = shift;
+	my $otrs_status = shift;
+	my $causale_ptr = shift; #se serve viene modificata la var puntata
+	
+	my $rit = undef;
+	
+	if ($otrs_status and exists($PM_Wind_settings_ptr->{ticketStateID_InProgress})) #ne controllo uno solo per l'esistenza
+	{
+		if ($otrs_status == $PM_Wind_settings_ptr->{ticketStateID_Open})
+		{
+			$rit = 'APERTO';
+		}
+		elsif ($otrs_status == $PM_Wind_settings_ptr->{ticketStateID_Risolto} and defined($causale_ptr) )
+		{
+			$rit = 'RESTITUITO';
+			$$causale_ptr = 'RISOLTO';
+		}
+		elsif ($otrs_status == $PM_Wind_settings_ptr->{ticketStateID_InProgress})
+		{
+			$rit = 'IN LAVORAZIONE';
+		}
+		
+		#per gli alarm dovrebbero bastare i 3 stati sopra, mentre per INCIDENT dovrebbe bastare lo stato 'APERTO'
+		# NOTA 2: attenzione, la mappatura e' quindi incompleta!!!
+	}
+
+
+
+	return $rit;
+}
+
+
+
+
+
+sub MS_WindStatusToOtrsTicketStateID
+{
+	my $PM_Wind_settings_ptr = shift;
+	my $wind_status = shift;
+	my $causale = shift; #serve solo per lo stato "RESTITUITO"
+	
+	
+	my $rit = undef;
+	
+	if ($wind_status and exists($PM_Wind_settings_ptr->{ticketStateID_Sospeso})) #ne controllo uno solo per l'esistenza
+	{
+		if ($wind_status =~ m/^\s*APERTO\s*$/i)
+		{
+			$rit = $PM_Wind_settings_ptr->{ticketStateID_Open};
+		}
+		elsif ($wind_status =~ m/^\s*IN\s+LAVORAZIONE\s*$/i)
+		{
+			$rit = $PM_Wind_settings_ptr->{ticketStateID_InProgress};
+		}
+		elsif ($wind_status =~ m/^\s*SOSPESO\s*$/i)
+		{
+			$rit = $PM_Wind_settings_ptr->{ticketStateID_Sospeso};
+		}
+		elsif ($wind_status =~ m/^\s*RESTITUITO\s*$/i and $causale) #se la CAUSALE non e' definita non posso fare il mapping
+		{
+			if ($causale =~ m/^\s*IN\s*ATTESA\s*INFORMAZIONI\s*$/i)
+			{
+				$rit = $PM_Wind_settings_ptr->{ticketStateID_InAttesaInfo};
+			}
+			elsif ($causale =~ m/^\s*NON\s*DI\s*COMPETENZA\s*$/i)
+			{
+				$rit = $PM_Wind_settings_ptr->{ticketStateID_NonDiCompetenza};
+			}
+			elsif ($causale =~ m/^\s*RISOLTO\s*$/i)
+			{
+				$rit = $PM_Wind_settings_ptr->{ticketStateID_Risolto};
+			}
+			elsif ($causale =~ m/^\s*NON\s*RISCONTRATO\s*$/i)
+			{
+				$rit = $PM_Wind_settings_ptr->{ticketStateID_RisoltoNRI};
+			}
+			elsif ($causale =~ m/^\s*RISOLTO\s*NO\s*ACTION\s*$/i)
+			{
+				$rit = $PM_Wind_settings_ptr->{ticketStateID_RisoltoNoACT};
+			}
+		}
+		# -- EXPIRED non lo gestisco....
+		#elsif ($wind_status =~ m/^\s*EXPIRED\s*$/i)
+		#{
+		#	$rit = -1;
+		#}
+		
+	}
+	
+	return $rit;
+}
 
 
 
