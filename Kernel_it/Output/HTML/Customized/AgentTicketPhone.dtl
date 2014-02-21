@@ -1,0 +1,1181 @@
+# --
+# AgentTicketPhone.dtl - provides HTML form for phone
+# Copyright (C) 2001-2009 OTRS AG, http://otrs.org/
+# --
+# $Id: AgentTicketPhone.dtl,v 1.50.2.5 2009/10/30 09:39:11 mb Exp $
+# --
+# This software comes with ABSOLUTELY NO WARRANTY. For details, see
+# the enclosed file COPYING for license information (AGPL). If you
+# did not receive this file, see http://www.gnu.org/licenses/agpl.txt.
+# --
+# 
+
+# include AJAX lib
+$Include{"AJAX"}
+
+$Include{"AgentCustomerSearch"}
+
+<!-- start form -->
+<script language="JavaScript" type="text/javascript">
+<!--
+
+// [MS for FULL (2014-01-02) ]
+
+function MS_Populate_Wind_VARS() 
+{
+	var MS_sep = "#!#";
+	
+	// Categorie ALARM per Wind 
+	var MS_Category_Alarm_PM_Wind = '$Env{"MS_Category_Alarm_PM_Wind"}';
+	MS_Category_Alarm_PM_Wind_ARRAY = MS_Category_Alarm_PM_Wind.split(MS_sep);
+	MS_Category_Alarm_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	// Categorie ALARM da Wind a PM
+	var MS_Category_Alarm_Wind_PM = '$Env{"MS_Category_Alarm_Wind_PM"}';
+	MS_Category_Alarm_Wind_PM_ARRAY = MS_Category_Alarm_Wind_PM.split(MS_sep);
+	MS_Category_Alarm_Wind_PM_ARRAY.sort(); //ordino alfabeticamente
+	
+	// Categorie Incident per Wind 
+	var MS_Category_Incident_PM_Wind = '$Env{"MS_Category_Incident_PM_Wind"}';
+	MS_Category_Incident_PM_Wind_ARRAY = MS_Category_Incident_PM_Wind.split(MS_sep);
+	MS_Category_Incident_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	// AMBITO TT per Wind 
+	var MS_AmbitoTT_PM_Wind = '$Env{"MS_AmbitoTT_PM_Wind"}';
+	MS_AmbitoTT_PM_Wind_ARRAY = MS_AmbitoTT_PM_Wind.split(MS_sep);
+	MS_AmbitoTT_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	// Tipo Linea per Wind 
+	var MS_TipoLinea_PM_Wind = '$Env{"MS_TipoLinea_PM_Wind"}';
+	MS_TipoLinea_PM_Wind_ARRAY = MS_TipoLinea_PM_Wind.split(MS_sep);
+	MS_TipoLinea_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	// MNP Type per Wind 
+	var MS_MNPType_PM_Wind = '$Env{"MS_MNPType_PM_Wind"}';
+	MS_MNPType_PM_Wind_ARRAY = MS_MNPType_PM_Wind.split(MS_sep);
+	MS_MNPType_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	// Marcaggio per Wind 
+	var MS_Marcaggio_PM_Wind = '$Env{"MS_Marcaggio_PM_Wind"}';
+	MS_Marcaggio_PM_Wind_ARRAY = MS_Marcaggio_PM_Wind.split(MS_sep);
+	MS_Marcaggio_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+
+
+   // i nuovi stati
+   MS_ticketStateID_Sospeso = '$Env{"MS_ticketStateID_Sospeso"}';
+   MS_ticketStateID_RisoltoNRI = '$Env{"MS_ticketStateID_RisoltoNRI"}';
+   MS_ticketStateID_RisoltoNoACT = '$Env{"MS_ticketStateID_RisoltoNoACT"}';
+   
+   
+   // i nuovi tipi di ticket
+   MS_ticketTypeID_IncidentToWind = '$Env{"MS_ticketTypeID_IncidentToWind"}';
+   MS_ticketTypeID_IncidentToPM = '$Env{"MS_ticketTypeID_IncidentToPM"}';
+   MS_ticketTypeID_IncidentToEricsson = '$Env{"MS_ticketTypeID_IncidentToEricsson"}';
+   MS_ticketTypeID_AlarmFromWind = '$Env{"MS_ticketTypeID_AlarmFromWind"}';
+   MS_ticketTypeID_AlarmToWind = '$Env{"MS_ticketTypeID_AlarmToWind"}';
+   MS_ticketTypeID_AlarmToEricsson = '$Env{"MS_ticketTypeID_AlarmToEricsson"}';
+   MS_ticketTypeID_AlarmToPM = '$Env{"MS_ticketTypeID_AlarmToPM"}';
+
+}
+
+
+
+
+
+
+function MS_TicketTypeID_changed()
+{
+	if (document.compose.TypeID)
+	{
+		//var orariDisservizio=document.getElementById("row_MS_full_TicketFreeTime1and2");
+		var orariDisservizio=document.getElementsByName("row_MS_full_TicketFreeTime1and2");
+		//alert(orariDisservizio.length);
+		if(document.compose.TypeID.value == MS_ticketTypeID_AlarmToWind  || 
+			document.compose.TypeID.value == MS_ticketTypeID_AlarmToEricsson  || 
+			document.compose.TypeID.value == MS_ticketTypeID_AlarmToPM  
+		)
+		{
+			if(orariDisservizio[0] && orariDisservizio[1])
+			{
+				orariDisservizio[0].style.display = '';
+				orariDisservizio[1].style.display = '';
+			}
+		}
+		else
+		{
+			if(orariDisservizio[0] && orariDisservizio[1])
+			{
+				orariDisservizio[0].style.display = 'none';
+				orariDisservizio[1].style.display = 'none';
+			}
+		}
+	}
+	
+}
+
+
+
+
+
+function MS_Populate_Wind_Fields() 
+{
+	//alert('MS_Populate_Wind_Fields: ok');
+
+	MS_Populate_Wind_VARS();
+
+	var x = '';
+
+	var MS_sep = "#!#";
+	var MS_category_prefix_INCIDENT = "WIND_ERICSSON (INCIDENT) - ";
+	var MS_category_prefix_ALARM = "WIND_ERICSSON (ALARM) - ";
+	var MS_category_prefix_ALARM_to_PM = "WIND_ERICSSON (ALARM to PM) - ";
+	
+
+
+
+	// Categorie ALARM per Wind 
+	//var MS_Category_Alarm_PM_Wind = '$Env{"MS_Category_Alarm_PM_Wind"}';
+	//var MS_Category_Alarm_PM_Wind_ARRAY = MS_Category_Alarm_PM_Wind.split(MS_sep);
+	//MS_Category_Alarm_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	x=document.getElementById("TicketFreeText15");
+	for (var i=0;i<MS_Category_Alarm_PM_Wind_ARRAY.length;i++)
+	{
+		var option = document.createElement("option");
+		option.value = MS_Category_Alarm_PM_Wind_ARRAY[i];
+		option.text = MS_category_prefix_ALARM + MS_Category_Alarm_PM_Wind_ARRAY[i];
+		try
+		{
+		  // for IE earlier than version 8
+		  x.add(option,x.options[null]);
+		}
+		catch (e)
+		{
+		  x.add(option,null);
+		}
+	}
+
+
+	// Categorie ALARM da Wind a PM
+	//var MS_Category_Alarm_Wind_PM = '$Env{"MS_Category_Alarm_Wind_PM"}';
+	//var MS_Category_Alarm_Wind_PM_ARRAY = MS_Category_Alarm_Wind_PM.split(MS_sep);
+	//MS_Category_Alarm_Wind_PM_ARRAY.sort(); //ordino alfabeticamente
+	x=document.getElementById("TicketFreeText15");
+	for (var i=0;i<MS_Category_Alarm_Wind_PM_ARRAY.length;i++)
+	{
+		var option = document.createElement("option");
+		option.value = MS_Category_Alarm_Wind_PM_ARRAY[i];
+		option.text = MS_category_prefix_ALARM_to_PM + MS_Category_Alarm_Wind_PM_ARRAY[i];
+		try
+		{
+		  // for IE earlier than version 8
+		  x.add(option,x.options[null]);
+		}
+		catch (e)
+		{
+		  x.add(option,null);
+		}
+	}
+	
+
+	// Categorie Incident per Wind 
+	//var MS_Category_Incident_PM_Wind = '$Env{"MS_Category_Incident_PM_Wind"}';
+	//var MS_Category_Incident_PM_Wind_ARRAY = MS_Category_Incident_PM_Wind.split(MS_sep);
+	//MS_Category_Incident_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	x=document.getElementById("TicketFreeText15");
+	for (var i=0;i<MS_Category_Incident_PM_Wind_ARRAY.length;i++)
+	{
+		//alert("Categoria " + i + ": " + MS_Category_Incident_PM_Wind_ARRAY[i]);
+		var option = document.createElement("option");
+		option.value = MS_Category_Incident_PM_Wind_ARRAY[i];
+		option.text = MS_category_prefix_INCIDENT + MS_Category_Incident_PM_Wind_ARRAY[i];
+		try
+		{
+		  // for IE earlier than version 8
+		  x.add(option,x.options[null]);
+		}
+		catch (e)
+		{
+		  x.add(option,null);
+		}
+	}
+	
+	
+	
+
+	
+
+	// AMBITO TT per Wind 
+	//var MS_AmbitoTT_PM_Wind = '$Env{"MS_AmbitoTT_PM_Wind"}';
+	//var MS_AmbitoTT_PM_Wind_ARRAY = MS_AmbitoTT_PM_Wind.split(MS_sep);
+	//MS_AmbitoTT_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	x=document.getElementById("WIND_AMBITOTT");
+	for (var i=0;i<MS_AmbitoTT_PM_Wind_ARRAY.length;i++)
+	{
+		var option = document.createElement("option");
+		option.value = MS_AmbitoTT_PM_Wind_ARRAY[i];
+		option.text = MS_AmbitoTT_PM_Wind_ARRAY[i];
+		try
+		{
+		  // for IE earlier than version 8
+		  x.add(option,x.options[null]);
+		}
+		catch (e)
+		{
+		  x.add(option,null);
+		}
+	}	
+
+
+	// Tipo Linea per Wind 
+	//var MS_TipoLinea_PM_Wind = '$Env{"MS_TipoLinea_PM_Wind"}';
+	//var MS_TipoLinea_PM_Wind_ARRAY = MS_TipoLinea_PM_Wind.split(MS_sep);
+	//MS_TipoLinea_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	x=document.getElementById("WIND_TIPOLINEA");
+	for (var i=0;i<MS_TipoLinea_PM_Wind_ARRAY.length;i++)
+	{
+		var option = document.createElement("option");
+		option.value = MS_TipoLinea_PM_Wind_ARRAY[i];
+		option.text = MS_TipoLinea_PM_Wind_ARRAY[i];
+		try
+		{
+		  // for IE earlier than version 8
+		  x.add(option,x.options[null]);
+		}
+		catch (e)
+		{
+		  x.add(option,null);
+		}
+	}	
+
+
+	// MNP Type per Wind 
+	//var MS_MNPType_PM_Wind = '$Env{"MS_MNPType_PM_Wind"}';
+	//var MS_MNPType_PM_Wind_ARRAY = MS_MNPType_PM_Wind.split(MS_sep);
+	//MS_MNPType_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	x=document.getElementById("WIND_MNPTYPE");
+	for (var i=0;i<MS_MNPType_PM_Wind_ARRAY.length;i++)
+	{
+		var option = document.createElement("option");
+		option.value = MS_MNPType_PM_Wind_ARRAY[i];
+		option.text = MS_MNPType_PM_Wind_ARRAY[i];
+		try
+		{
+		  // for IE earlier than version 8
+		  x.add(option,x.options[null]);
+		}
+		catch (e)
+		{
+		  x.add(option,null);
+		}
+	}
+
+
+
+
+	//aggiungo evento al TicketFreeText15 (Categoria) per annullare alcuni effetti nefasti degli aggiornamenti AJAX che fa OTRS
+	//x=document.getElementById("TicketFreeText15");
+	//x.setAttribute("onchange", function(){MS_TicketFreeText15_changed();});
+	var ft15 = document.getElementById("TicketFreeText15");
+	ft15.id = "TicketFreeText15_MS"; //ATTENZIONE: cambio l'id della Categoria
+	ft15.name = "TicketFreeText15_MS"; //ATTENZIONE: cambio il name della Categoria
+	var MSselect = document.createElement("select");
+	MSselect.setAttribute("name", "TicketFreeText15");
+	MSselect.setAttribute("id", "TicketFreeText15");
+	MSselect.style.display = 'none';
+	var MSoption;
+	var numOptions = ft15.options.length;
+	for(var ii=0; ii<numOptions; ii++ )
+	{
+		MSoption = document.createElement("option");
+		MSoption.value = ft15.options[ii].value;
+		MSoption.text = ft15.options[ii].text;
+		MSselect.appendChild(MSoption);
+	}
+	document.compose.appendChild(MSselect);
+
+
+
+
+
+	
+	
+	
+	if(!document.compose.TicketFreeText10)
+	{
+		var freekey10 = document.createElement("input"); //input element, text
+		freekey10.setAttribute('type',"hidden");
+		freekey10.setAttribute('name',"TicketFreeKey10");
+		freekey10.setAttribute('id',"TicketFreeKey10");
+		freekey10.setAttribute("value", "VF Servizio|VF Descrizione");	
+		document.compose.appendChild(freekey10); // put it into the DOM
+	
+		var freetext10 = document.createElement("input"); //input element, text
+		freetext10.setAttribute('type',"hidden");
+		freetext10.setAttribute('name',"TicketFreeText10");
+		freetext10.setAttribute('id',"TicketFreeText10");
+		freetext10.setAttribute("value", "");
+		document.compose.appendChild(freetext10); // put it into the DOM
+	}
+	
+	if(!document.compose.TicketFreeText11)
+	{
+		var freekey11 = document.createElement("input"); //input element, text
+		freekey11.setAttribute('type',"hidden");
+		freekey11.setAttribute('name',"TicketFreeKey11");
+		freekey11.setAttribute('id',"TicketFreeKey11");
+		freekey11.setAttribute("value", "VF Citta|VF Provincia|VF Via");	
+		document.compose.appendChild(freekey11); // put it into the DOM	
+
+		var freetext11 = document.createElement("input"); //input element, text
+		freetext11.setAttribute('type',"hidden");
+		freetext11.setAttribute('name',"TicketFreeText11");
+		freetext11.setAttribute('id',"TicketFreeText11");
+		freetext11.setAttribute("value", "");
+		document.compose.appendChild(freetext11); // put it into the DOM
+	}
+	
+	
+	
+	
+	
+	//Aggiungo un evento onchange al TypeID
+	if (document.compose.TypeID)
+	{
+		document.compose.TypeID.onchange=MS_TicketTypeID_changed;
+	}
+
+
+	
+}
+
+
+
+
+
+// var globali
+var MS_Category_Alarm_PM_Wind_ARRAY = '';
+var MS_Category_Alarm_Wind_PM_ARRAY = '';
+var MS_Category_Incident_PM_Wind_ARRAY = '';
+var MS_AmbitoTT_PM_Wind_ARRAY = '';
+var MS_TipoLinea_PM_Wind_ARRAY = '';
+var MS_MNPType_PM_Wind_ARRAY = '';
+var MS_Marcaggio_PM_Wind_ARRAY = '';
+
+// i nuovi stati
+var MS_ticketStateID_Sospeso = '';
+var MS_ticketStateID_RisoltoNRI = '';
+var MS_ticketStateID_RisoltoNoACT = '';
+   
+   
+// i nuovi tipi di ticket
+var MS_ticketTypeID_IncidentToWind = '';
+var MS_ticketTypeID_IncidentToPM = '';
+var MS_ticketTypeID_IncidentToEricsson = '';
+var MS_ticketTypeID_AlarmFromWind = '';
+var MS_ticketTypeID_AlarmToWind = '';
+var MS_ticketTypeID_AlarmToEricsson = '';
+var MS_ticketTypeID_AlarmToPM = '';
+
+
+
+
+window.onload = MS_Populate_Wind_Fields;
+
+
+
+
+
+
+
+function MS_Wind_Validate() 
+{
+	var rit = false;
+
+
+//alert("Prima: " + document.compose.TicketFreeText15.value);
+//alert("Prima TicketFreeText15_MS: " + document.compose.TicketFreeText15_MS.value);
+
+	//ripristino il magheggio fatto sul campo della Categoria...
+	var ft15_MS = document.getElementById("TicketFreeText15");
+	var ft15_real = document.getElementById("TicketFreeText15_MS");
+	var MSoption;
+	var numOptions_MS = ft15_MS.options.length;
+	var numOptions_real = ft15_real.options.length;
+	for(var ii=0; ii<numOptions_MS; ii++ )
+	{
+		ft15_MS.remove(ii);
+	}
+	for(var jj=0; jj<numOptions_real; jj++ )
+	{
+		MSoption = document.createElement("option");
+		MSoption.value = ft15_real.options[jj].value;
+		MSoption.text = ft15_real.options[jj].text;
+		if(ft15_real.options[jj].selected)
+		{
+			MSoption.selected=true;
+		}
+		ft15_MS.appendChild(MSoption);
+	}
+
+	//document.compose.TicketFreeText15.value = document.compose.TicketFreeText15_MS.value;
+//alert("Dopo: " + document.compose.TicketFreeText15.value);
+//alert("Dopo TicketFreeText15_MS: " + document.compose.TicketFreeText15_MS.value);
+
+
+
+	
+    if (document.compose.TypeID && document.compose.TypeID.value == MS_ticketTypeID_AlarmFromWind) //Alarm da Wind
+    {
+        alert('$JSText{"Non puoi creare un *Alarm da Wind* "}');
+        document.compose.TypeID.focus();
+    }  
+    else if (document.compose.TypeID && 
+    			(document.compose.TypeID.value == MS_ticketTypeID_IncidentToWind ||
+    			document.compose.TypeID.value == MS_ticketTypeID_IncidentToPM ||
+    			document.compose.TypeID.value == MS_ticketTypeID_IncidentToEricsson )
+    		) //Incident per Wind, per PM o per Ericsson
+    {
+    	if(document.compose.TicketFreeText15)
+    	{
+    		var category_ok = false;
+			for (var i=0;i<MS_Category_Incident_PM_Wind_ARRAY.length;i++)
+			{
+				if(document.compose.TicketFreeText15.value == MS_Category_Incident_PM_Wind_ARRAY[i])
+				{
+					category_ok = true;
+					break;
+				}
+			}
+			
+			if(category_ok)
+			{
+				if(document.compose.WIND_AMBITOTT)
+				{
+					var ambito_ok = false;
+					for (var i=0;i<MS_AmbitoTT_PM_Wind_ARRAY.length;i++)
+					{
+						if(document.compose.WIND_AMBITOTT.value == MS_AmbitoTT_PM_Wind_ARRAY[i])
+						{
+							ambito_ok = true;
+							break;
+						}
+					}
+					
+					if(ambito_ok)
+					{   					
+						rit = true;
+					}
+					else
+					{
+						alert('$JSText{"Ambito TT non corretto"}');
+						document.compose.WIND_AMBITOTT.focus();						
+					}
+				}
+				else
+				{
+					alert('$JSText{"Devi definire un Ambito TT"}');
+					document.compose.WIND_AMBITOTT.focus();				
+				}
+			}
+			else
+			{
+    			alert('$JSText{"Categoria con valore non possibile per questa tipologia di ticket"}');
+    			document.compose.TicketFreeText15.focus();			
+			}
+    	}
+    	else
+    	{
+    		alert('$JSText{"Devi definire una Categoria"}');
+    		document.compose.TicketFreeText15.focus();
+    	}
+    } 
+    else if (document.compose.TypeID && 
+    			(document.compose.TypeID.value == MS_ticketTypeID_AlarmToWind ||
+    			document.compose.TypeID.value == MS_ticketTypeID_AlarmToPM ||
+    			document.compose.TypeID.value == MS_ticketTypeID_AlarmToEricsson )
+    		) //ALARM per Wind, per PM o per Ericsson
+    {
+    	if(document.compose.TicketFreeText15)
+    	{
+    		var category_ok = false;
+    		if(document.compose.TypeID.value == MS_ticketTypeID_AlarmToWind )
+    		{
+				for (var i=0;i<MS_Category_Alarm_PM_Wind_ARRAY.length;i++)
+				{
+					if(document.compose.TicketFreeText15.value == MS_Category_Alarm_PM_Wind_ARRAY[i])
+					{
+						category_ok = true;
+						break;
+					}
+				}
+			}
+			else if (document.compose.TypeID.value == MS_ticketTypeID_AlarmToPM ||
+    			document.compose.TypeID.value == MS_ticketTypeID_AlarmToEricsson )
+    		{
+				for (var i=0;i<MS_Category_Alarm_Wind_PM_ARRAY.length;i++)
+				{
+					if(document.compose.TicketFreeText15.value == MS_Category_Alarm_Wind_PM_ARRAY[i])
+					{
+						category_ok = true;
+						break;
+					}
+				}
+			}
+			
+			
+			if(category_ok)
+			{
+				if(document.compose.WIND_AMBITOTT)
+				{
+					var ambito_ok = false;
+					for (var i=0;i<MS_AmbitoTT_PM_Wind_ARRAY.length;i++)
+					{
+						if(document.compose.WIND_AMBITOTT.value == MS_AmbitoTT_PM_Wind_ARRAY[i])
+						{
+							ambito_ok = true;
+							break;
+						}
+					}
+					
+					if(ambito_ok)
+					{
+						rit = true;
+					}
+					else
+					{
+						alert('$JSText{"Ambito TT non corretto"}');
+						document.compose.WIND_AMBITOTT.focus();						
+					}
+				}
+				else
+				{
+					alert('$JSText{"Devi definire un Ambito TT"}');
+					document.compose.WIND_AMBITOTT.focus();				
+				}
+			}
+			else
+			{
+    			alert('$JSText{"Categoria con valore non possibile per questa tipologia di ticket"}');
+    			document.compose.TicketFreeText15.focus();			
+			}
+    	}
+    	else
+    	{
+    		alert('$JSText{"Devi definire una Categoria"}');
+    		document.compose.TicketFreeText15.focus();
+    	}
+    } 
+    else
+    {
+    	rit = true;
+    }
+ 
+ 
+    /*      
+    WIND_IMEI
+    WIND_IDLINEA
+    WIND_AMBITOTT
+    WIND_TIPOLINEA
+    WIND_MNPTYPE
+    
+    WIND_INDIRIZZO
+    WIND_COMUNE
+    WIND_PROVINCIA
+    WIND_CAP
+    */ 
+    
+    var normalSeparator = '|'; 
+	var specialSeparator = '_#_'; 
+    
+    if(document.compose.TicketFreeText10 && document.compose.TicketFreeText10.value != '') // VF_Servizio|VF_Descrizione
+    {
+    	if( (document.compose.WIND_AMBITOTT && document.compose.WIND_AMBITOTT.value != '') ||
+    		(document.compose.WIND_TIPOLINEA && document.compose.WIND_TIPOLINEA.value != '') ||
+    		(document.compose.WIND_MNPTYPE && document.compose.WIND_MNPTYPE.value != '')
+    	    )
+    	{
+    		alert('$JSText{"Non puoi valorizzare contemporaneamente VF_Servizio|VF_Descrizione e Ambito TT, Tipo Linea, MNP Type "}');
+    		rit = false;
+    		document.compose.TicketFreeText10.focus();    	
+    	}
+    }
+    else if( (document.compose.WIND_AMBITOTT && document.compose.WIND_AMBITOTT.value != '') ||
+    		(document.compose.WIND_TIPOLINEA && document.compose.WIND_TIPOLINEA.value != '') ||
+    		(document.compose.WIND_MNPTYPE && document.compose.WIND_MNPTYPE.value != '')
+    	    )
+    {
+		if(!document.compose.TicketFreeText10)
+		{
+			var freetext10 = document.createElement("input"); //input element, text
+			freetext10.setAttribute('type',"hidden");
+			freetext10.setAttribute('name',"TicketFreeText10");
+			freetext10.setAttribute('id',"TicketFreeText10");
+			document.compose.appendChild(freetext10); // put it into the DOM
+		}
+		
+		document.compose.TicketFreeText10.value = document.compose.WIND_AMBITOTT.value + normalSeparator + document.compose.WIND_TIPOLINEA.value + specialSeparator + document.compose.WIND_MNPTYPE.value;
+		
+    }
+
+
+
+
+    if(document.compose.TicketFreeText11 && document.compose.TicketFreeText11.value != '') // VF_Citta|VF_Provincia|VF_Via
+    {
+    	if( (document.compose.WIND_INDIRIZZO && document.compose.WIND_INDIRIZZO.value != '') ||
+    		(document.compose.WIND_COMUNE && document.compose.WIND_COMUNE.value != '') ||
+    		(document.compose.WIND_PROVINCIA && document.compose.WIND_PROVINCIA.value != '') || 
+    		(document.compose.WIND_CAP && document.compose.WIND_CAP.value != '')
+    	    )
+    	{
+    		alert('$JSText{"Non puoi valorizzare contemporaneamente VF_Citta|VF_Provincia|VF_Via e i campi indirizzo previsti per Wind "}');
+    		rit = false;
+    		document.compose.TicketFreeText11.focus();    	
+    	}
+    }
+    else if( (document.compose.WIND_INDIRIZZO && document.compose.WIND_INDIRIZZO.value != '') ||
+    		(document.compose.WIND_COMUNE && document.compose.WIND_COMUNE.value != '') ||
+    		(document.compose.WIND_PROVINCIA && document.compose.WIND_PROVINCIA.value != '') || 
+    		(document.compose.WIND_CAP && document.compose.WIND_CAP.value != '')
+    	    )
+    {
+		if(!document.compose.TicketFreeText11)
+		{
+			var freetext11 = document.createElement("input"); //input element, text
+			freetext11.setAttribute('type',"hidden");
+			freetext11.setAttribute('name',"TicketFreeText11");
+			freetext11.setAttribute('id',"TicketFreeText11");
+			document.compose.appendChild(freetext11); // put it into the DOM
+		}
+		
+		document.compose.TicketFreeText11.value = document.compose.WIND_COMUNE.value + normalSeparator + document.compose.WIND_PROVINCIA.value + normalSeparator + document.compose.WIND_INDIRIZZO.value + specialSeparator + document.compose.WIND_CAP.value;
+		
+    }
+
+
+
+
+
+
+    if(document.compose.TicketFreeText3 && document.compose.TicketFreeText3.value != '') // VF_Citta|VF_Provincia|VF_Via
+    {
+    	if( (document.compose.WIND_IMEI && document.compose.WIND_IMEI.value != '') )
+    	{
+    		var n = document.compose.TicketFreeText3.value.indexOf("|"); 
+    		
+    		if(n == -1) // separatore non trovato
+    		{
+    			document.compose.TicketFreeText3.value = document.compose.TicketFreeText3.value + normalSeparator + specialSeparator + document.compose.WIND_IMEI.value;
+    		}
+    		else
+    		{
+    			document.compose.TicketFreeText3.value = document.compose.TicketFreeText3.value + specialSeparator + document.compose.WIND_IMEI.value;
+    		}
+    	}
+    }
+    else if( (document.compose.WIND_IMEI && document.compose.WIND_IMEI.value != '') )
+    {		
+		document.compose.TicketFreeText3.value = normalSeparator + specialSeparator + document.compose.WIND_IMEI.value;
+    }
+
+
+    
+    return rit;
+}
+
+// [MS for FULL (end)]
+
+
+
+
+
+       
+
+
+
+
+function submit_compose() {
+    // if RichText is enabled, update the hidden textarea now for the body content check to work correctly
+    if (typeof RichTextUpdateLinkedField == 'function') {
+        RichTextUpdateLinkedField();
+    }
+
+    if (document.compose.TypeID && document.compose.TypeID.value == "") {
+        alert('$JSText{"Ticket Type is required!"}');
+        document.compose.TypeID.focus();
+        return false;
+    }
+    else if (document.compose.Subject.value == "") {
+        alert('$JSText{"A message should have a subject!"}');
+        document.compose.Subject.focus();
+        return false;
+    }
+    else if (document.compose.Body.value == "") {
+        alert('$JSText{"A message should have a body!"}');
+        if (typeof RichTextUpdateLinkedField == 'function') {
+            RichTextFocus();
+        }
+        else {
+            document.compose.Body.focus();
+        }
+        return false;
+    }
+    else if (isNaN(document.compose.Day.value) || isNaN(document.compose.Month.value) || isNaN(document.compose.Year.value) || isNaN(document.compose.Hour.value) || isNaN(document.compose.Minute.value)) {
+        alert('$JSText{"Invalid date!"}');
+        return false;
+    }
+    else if (document.compose.Day.value < 1 || document.compose.Day.value > 31 || document.compose.Month.value < 1 || document.compose.Month.value > 12 || document.compose.Year.value < 999 || document.compose.Year.value > 10000 || document.compose.Hour.value < 0 || document.compose.Hour.value > 23 ||document.compose.Minute.value < 0 || document.compose.Minute.value > 59  ) {
+        alert('$JSText{"Invalid date!"}');
+        return false;
+    }
+<!-- dtl:block:TicketFreeTextCheckJs -->
+    else if (document.compose.$Data{"TicketFreeTextField"}.value == "") {
+        alert('$JSText{"A required field is:"} ' + document.compose.$Data{"TicketFreeKeyField"}.value + '!');
+        document.compose.$Data{"TicketFreeTextField"}.focus();
+        return false;
+    }
+<!-- dtl:block:TicketFreeTextCheckJs -->
+<!-- dtl:block:TicketFreeTimeCheckJs -->
+    if (document.compose.$Data{"TicketFreeTimeCheck"} && document.compose.$Data{"TicketFreeTimeCheck"}.checked == false) {
+        alert('$JSText{"A required field is:"} $QData{"TicketFreeTimeKey"}!');
+        document.compose.$Data{"TicketFreeTimeCheck"}.focus();
+        return false;
+    }
+<!-- dtl:block:TicketFreeTimeCheckJs -->
+<!-- dtl:block:TimeUnitsJs -->
+    else if (document.compose.TimeUnits.value != "") {
+        var reg = /^-{0,1}\d+?((\.|,){0,1}\d+?){0,1}$/;
+        if (reg.test(document.compose.TimeUnits.value) == false) {
+            alert('$JSText{"Invalid time!"}');
+            document.compose.TimeUnits.focus();
+            return false;
+        }
+    }
+    else if (document.compose.TimeUnits.value == "" && $Config{"Ticket::Frontend::NeedAccountedTime"}) {
+        alert('$JSText{"You need to account time!"}');
+        document.compose.TimeUnits.focus();
+        return false;
+    }
+<!-- dtl:block:TimeUnitsJs -->
+    else {
+        //return true;
+        var test_ = MS_Wind_Validate();
+        
+        if(!test_) //false - invio form annullato
+        {
+			if (document.compose.TicketFreeText10)
+			{
+				document.compose.TicketFreeText10.value = '';
+			}
+
+			if (document.compose.TicketFreeText11)
+			{
+				document.compose.TicketFreeText11.value = '';
+			}
+		}
+		
+        return test_;
+    }
+}
+//-->
+</script>
+
+<script language="JavaScript" type="text/javascript">
+<!--
+function SpellCheckSubmit() {
+    document.spelling.Body.value = document.compose.Body.value;
+    window.open('', 'spelling', 'toolbar=no,location=no,status=yes,scrollbars=yes,resizable=yes,width=700,height=550,left=100,top=100');
+    document.spelling.submit()
+}
+// -->
+</script>
+
+<script language="JavaScript" type="text/javascript">
+<!--
+function CustomerSubmit() {
+    window.open('', 'customer', 'toolbar=no,location=no,status=yes,scrollbars=yes,resizable=yes,width=700,height=550,left=100,top=100');
+    document.customer.submit()
+}
+// -->
+</script>
+
+<script language="JavaScript" type="text/javascript">
+<!--
+function clear_field() {
+    document.compose.From.value = "";
+    document.compose.From.focus();
+}
+//-->
+</script>
+
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+    <tr>
+        <td class="mainhead">
+            $Env{"Box0"}$Text{"Phone call"} / $Text{"new ticket"}$Env{"Box1"}
+        </td>
+    </tr>
+    <tr>
+        <td class="mainbody">
+#      <form action="$Env{"CGIHandle"}" method="post" enctype="multipart/form-data">
+#        <input type="hidden" name="Action" value="$Env{"Action"}"/>
+#        <input type="hidden" name="Subaction" value="StoreNew"/>
+#        <input type="hidden" name="FormID" value="$QData{"FormID"}"/>
+#        <input type="hidden" name="ExpandCustomerName" value="2"/>
+#        <input type="hidden" name="Subject" value="Example Subject"/>
+#        <input type="hidden" name="Body" value="Name:
+#        Product:
+#        Comment:"/>
+#        <input class="button" type="submit" name="" value="$Text{"Example Template"}"/>
+#      </form>
+#      <hr>
+            <form action="$Env{"CGIHandle"}" method="post" enctype="multipart/form-data" name="compose">
+                <input type="hidden" name="Action" value="$Env{"Action"}"/>
+                <input type="hidden" name="Subaction" value="StoreNew"/>
+                <input type="hidden" name="FormID" value="$QData{"FormID"}"/>
+                <input type="hidden" name="ExpandCustomerName" value="0"/>
+                <input type="hidden" name="OwnerAll" value="$QData{"OwnerAll"}"/>
+                <input type="hidden" name="ResponsibleAll" value="$QData{"ResponsibleAll"}"/>
+                <input type="hidden" name="PreSelectedCustomerUser" value=""/>
+                <input type="hidden" name="SelectedCustomerUser" value="$QData{"CustomerUser"}"/>
+                <input type="hidden" name="TicketID" value="$QData{"TicketID"}"/>
+                <input type="hidden" name="LinkTicketID" value="$QData{"LinkTicketID"}"/>
+                <table border="0" width="100%">
+<!-- dtl:block:TicketType -->
+                    <tr>
+                        <td class="contentkey">$Text{"Type"}:</td>
+                        <td class="contentvalue"> $Data{"TypeStrg"}</td>
+                    </tr>
+<!-- dtl:block:TicketType -->
+                    <tr>
+                        <td width="20%"></td>
+                       <td width="60%" class="contentvalue">
+#<!-- dtl:block:CustomerSearchAutoCompleteDivStart-->
+#                            <div id="myAutoComplete" class="myAutoComplete">
+#<!-- dtl:block:CustomerSearchAutoCompleteDivStart -->
+#                                <input id="myAutoCompleteInput" type="text" name="From" value="$QData{"From"}" size="80"/>
+#<!-- dtl:block:CustomerSearchAutoCompleteDivEnd -->
+#                                <div id="myAutoCompleteContainer"></div>
+#                            </div>
+#<!-- dtl:block:CustomerSearchAutoCompleteDivEnd -->
+#<!-- dtl:block:CustomerSearchAutoCompleteFromInvalid -->
+#                            <br/>
+#<!-- dtl:block:CustomerSearchAutoCompleteFromInvalid -->
+#
+#                            <font color="red" size="-2">$Text{"$Data{"From invalid"}"}</font>
+#                            <br/>
+#                            $Data{"CustomerUserStrg"}
+#                            <dtl if ($Data{"CustomerUserStrg"} ne "") { $Data{"TakeThisCustomer"} = "<br/><input class="button" type="submit" name="ExpandCustomerName2" value="$Text{"Take this Customer"}"/>"; }>
+#                            $Data{"TakeThisCustomer"}
+#<!-- dtl:block:SearchCustomerButton -->
+#                            <input class="button" type="submit" name="ExpandCustomerName1" value="$Text{"Search Customer"}"/>
+#                            <input class="button" type="submit" name="ClearFrom" value="$Text{"Clear From"}" onclick="javascript:clear_field(); return false;"/>
+#<!-- dtl:block:SearchCustomerButton -->
+                       </td>
+                        <td width="20%" rowspan="10" class="contentvalue">
+# show customer info table
+<!-- dtl:block:CustomerTable -->
+                            <p>
+                                <div>
+                                    <b>$Text{"Customer Info"}</b>:<br/>
+                                    <div id="CustomerTable">
+                                        $Data{"CustomerTable"}
+                                    </div>
+                                </div>
+                            </p>
+<!-- dtl:block:CustomerTable -->
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="contentkey">$Text{"To"}:</td>
+                        <td class="contentvalue">$Data{"ToStrg"} <font color="red" size="-2">$Text{"$Data{"Destination invalid"}"}</font>
+<!-- dtl:block:ToUpdateSubmit -->
+                            <input class="button" type="submit" value="$Text{"Refresh"}" name="ExpandCustomerName2"/>
+<!-- dtl:block:ToUpdateSubmit -->
+                        </td>
+                    </tr>
+<!-- dtl:block:TicketService -->
+                    <tr>
+                        <td class="contentkey">$Text{"Service"}:</td>
+                        <td class="contentvalue">
+                            $Data{"ServiceStrg"}
+                            <font color="red" size="-2">$Text{"$Data{"Service invalid"}"}</font>
+                        </td>
+                    </tr>
+<!-- dtl:block:TicketService -->
+<!-- dtl:block:TicketSLA -->
+                    <tr>
+                        <td class="contentkey">$Text{"SLA"}:</td>
+                        <td class="contentvalue">
+                            $Data{"SLAStrg"}
+                            <font color="red" size="-2">$Text{"$Data{"SLA invalid"}"}</font>
+                        </td>
+                    </tr>
+<!-- dtl:block:TicketSLA -->
+<!-- dtl:block:OwnerSelection -->
+                    <tr>
+                        <td class="contentkey">$Text{"Owner"}:</td>
+                        <td class="contentvalue">$Data{"OptionStrg"}
+<!-- dtl:block:OwnerSelectionAllJS -->
+#              $Env{"Box0"}<a href="" onclick="document.compose.ExpandCustomerName.value='3'; document.compose.OwnerAll.value='1'; document.compose.submit(); return false;" onmouseout="window.status='';" onmouseover="window.status='$JSText{"All Agents"}'; return true;">$Text{"All"}</a>$Env{"Box1"}
+                            $Env{"Box0"}<a href="" onclick="document.compose.OwnerAll.value='1'; AJAXUpdate('AJAXUpdate', 'OwnerAll', ['OwnerAll', 'Dest'], ['NewUserID']); return false;" onmouseout="window.status='';" onmouseover="window.status='$JSText{"All Agents"}'; return true;">$Text{"All"}</a>$Env{"Box1"}
+<!-- dtl:block:OwnerSelectionAllJS -->
+<!-- dtl:block:OwnerSelectionAllSubmit -->
+                            <input class="button" type="submit" value="$Text{"All"}" name="OwnerAllRefresh"/>
+<!-- dtl:block:OwnerSelectionAllSubmit -->
+                        </td>
+                    </tr>
+<!-- dtl:block:OwnerSelection -->
+<!-- dtl:block:ResponsibleSelection -->
+                    <tr>
+                        <td class="contentkey">$Text{"Responsible"}:</td>
+                        <td class="contentvalue">$Data{"ResponsibleOptionStrg"}
+<!-- dtl:block:ResponsibleSelectionAllJS -->
+#              $Env{"Box0"}<a href="" onclick="document.compose.ExpandCustomerName.value='3'; document.compose.ResponsibleAll.value='1'; document.compose.submit(); return false;" onmouseout="window.status='';" onmouseover="window.status='$JSText{"All Agents"}'; return true;">$Text{"All"}</a>$Env{"Box1"}
+                            $Env{"Box0"}<a href="" onclick="document.compose.ResponsibleAll.value='1'; AJAXUpdate('AJAXUpdate', 'ResponsibleAll', ['ResponsibleAll', 'Dest'], ['NewResponsibleID']); return false;" onmouseout="window.status='';" onmouseover="window.status='$JSText{"All Agents"}'; return true;">$Text{"All"}</a>$Env{"Box1"}
+<!-- dtl:block:ResponsibleSelectionAllJS -->
+<!-- dtl:block:ResponsibleSelectionAllSubmit -->
+                            <input class="button" type="submit" value="$Text{"All"}" name="ResponsibleAllRefresh"/>
+<!-- dtl:block:ResponsibleSelectionAllSubmit -->
+                        </td>
+                    </tr>
+<!-- dtl:block:ResponsibleSelection -->
+                    <tr>
+                        <td class="contentkey">$Text{"Subject"}:</td>
+                        <td class="contentvalue">
+                            <input type="text" name="Subject" value="$QData{"Subject"}" size="80"/>
+                            <font color="red" size="-2">$Text{"$Data{"Subject invalid"}"}</font>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="contentkey">$Text{"Options"}:</td>
+                        <td class="contentvalue">
+<!-- dtl:block:SpellCheck -->
+                            $Env{"Box0"}<a href="" onclick="SpellCheckSubmit(); return false;" onmouseover="window.status='$JSText{"Spell Check"}'; return true;" onmouseout="window.status='';"><img border="0" src="$Config{"Frontend::ImagePath"}spell.png">$Text{"Spell Check"}</a>$Env{"Box1"}
+<!-- dtl:block:SpellCheck -->
+                            $Env{"Box0"}<a href="" onclick="CustomerSubmit(); return false;" onmouseover="window.status='$JSText{"Customer"}'; return true;" onmouseout="window.status='';"><img border="0" src="$Config{"Frontend::ImagePath"}group-small.png">$Text{"Customer"}</a>$Env{"Box1"}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="contentkey">$Text{"Text"}:</td>
+                        <td class="contentvalue">
+                            <div class="yui-skin-sam">
+<!-- dtl:block:RichText -->
+$Include{"RichTextEditor"}
+# set white background for buttons
+<style type="text/css">
+<!--
+                                .yui-skin-sam .yui-toolbar-container { background-color: #FFFFFF; }
+                                -->
+                                </style>
+<!-- dtl:block:RichText -->
+                                <textarea id="RichText" name="Body" rows="15" cols="$Config{"Ticket::Frontend::TextAreaNote"}">$QData{"Body"}</textarea>
+                                <font color="red" size="-2">$Text{"$Data{"Body invalid"}"}</font>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="contentkey">$Text{"Attachment"}:</td>
+                        <td class="contentvalue">
+                            <table cellspacing="0" cellpadding="0" width="400">
+<!-- dtl:block:Attachment -->
+                                <tr>
+                                    <td>$QData{"Filename"}</td>
+                                    <td>$QData{"Filesize"}</td>
+                                    <td align="right">
+                                        <input class="button" type="submit" name="AttachmentDelete$QData{"FileID"}" value="$Text{"Delete"}"/>
+                                    </td>
+                                </tr>
+<!-- dtl:block:Attachment -->
+                                <tr>
+                                    <td colspan="2">
+                                        <input name="file_upload" type="file" size="40" class="fixed"/>
+                                    </td>
+                                    <td align="right">
+                                        <input class="button" type="submit" name="AttachmentUpload" value="$Text{"Attach"}"/>
+                                        <a name="attachment"></a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="contentkey">$Text{"CustomerID"}:</td>
+                        <td class="contentvalue"> <input type="text" name="CustomerID" value="$QData{"CustomerID"}" size="25"/></td>
+                    </tr>
+                    <tr>
+                        <td class="contentkey">$Text{"Next ticket state"}:</td>
+                        <td class="contentvalue"> $Data{"NextStatesStrg"}</td>
+                    </tr>
+                    <tr>
+                        <td class="contentkey">$Text{"Pending Date"} ($Text{"for pending* states"}):</td>
+                        <td class="contentvalue">$Data{"PendingDateString"} <font color="red" size="-2">$Text{"$Data{"Date invalid"}"}</font></td>
+                    </tr>
+                    <tr>
+                        <td class="contentkey">$Text{"Priority"}:</td>
+                        <td class="contentvalue"> $Data{"PriorityStrg"}</td>
+                    </tr>
+<!-- dtl:block:TicketFreeText -->
+                    <tr>
+                        <td class="contentkey">$Data{"TicketFreeKeyField"}:</td>
+                        <td class="contentvalue">$Data{"TicketFreeTextField"}</td>
+                    </tr>
+<!-- dtl:block:TicketFreeText -->
+#<!-- dtl:block:TicketFreeText1 -->
+#          <tr>
+#            <td class="contentkey">$Data{"TicketFreeKeyField1"}:</td>
+#            <td class="contentvalue">$Data{"TicketFreeTextField1"}</td>
+#          </tr>
+#<!-- dtl:block:TicketFreeText1 -->
+#<!-- dtl:block:TicketFreeText2 -->
+#          <tr>
+#            <td class="contentkey">$Data{"TicketFreeKeyField2"}:</td>
+#            <td class="contentvalue">$Data{"TicketFreeTextField2"}</td>
+#          </tr>
+#<!-- dtl:block:TicketFreeText2 -->
+#<!-- dtl:block:TicketFreeTime -->
+#                    <tr>
+#                        <td class="contentkey">$Text{"$QData{"TicketFreeTimeKey"}"}:</td>
+#                        <td class="contentvalue">$Data{"TicketFreeTime"}</td>
+#                    </tr>
+#<!-- dtl:block:TicketFreeTime -->
+#<!-- dtl:block:TicketFreeTime1 -->
+#          <tr>
+#            <td class="contentkey">$Text{"$Config{"TicketFreeTimeKey1"}"}:</td>
+#            <td class="contentvalue">$Data{"TicketFreeTime1"}</td>
+#          </tr>
+#<!-- dtl:block:TicketFreeTime1 -->
+#<!-- dtl:block:TicketFreeTime2 -->
+#          <tr>
+#            <td class="contentkey">$Text{"$Config{"TicketFreeTimeKey2"}"}:</td>
+#            <td class="contentvalue">$Data{"TicketFreeTime2"}</td>
+#          </tr>
+#<!-- dtl:block:TicketFreeTime2 -->
+<!-- dtl:block:ArticleFreeText -->
+                    <tr>
+                        <td class="contentkey">$Data{"ArticleFreeKeyField"}:</td>
+                        <td class="contentvalue">$Data{"ArticleFreeTextField"}</td>
+                    </tr>
+<!-- dtl:block:ArticleFreeText -->
+#<!-- dtl:block:ArticleFreeText1 -->
+#          <tr>
+#            <td class="contentkey">$Data{"ArticleFreeKeyField1"}:</td>
+#            <td class="contentvalue">$Data{"ArticleFreeTextField1"}</td>
+#          </tr>
+#<!-- dtl:block:ArticleFreeText1 -->
+#<!-- dtl:block:ArticleFreeText2 -->
+#          <tr>
+#            <td class="contentkey">$Data{"ArticleFreeKeyField2"}:</td>
+#            <td class="contentvalue">$Data{"ArticleFreeTextField2"}</td>
+#          </tr>
+#<!-- dtl:block:ArticleFreeText2 -->
+<!-- dtl:block:TimeUnits -->
+                    <tr>
+                        <td class="contentkey">$Text{"Time units"}$Text{"$Config{"Ticket::Frontend::TimeUnits"}"}:</td>
+                        <td class="contentvalue"> <input type="text" name="TimeUnits" value="$QData{"TimeUnits"}" size="3"/></td>
+                    </tr>
+<!-- dtl:block:TimeUnits -->
+
+
+
+<!-- Wind (inizio) -->
+                   <tr>
+                        <td class="contentkey"> <br /> </td>
+                        <td class="contentvalue"> <br /></td>
+                    </tr>
+                    
+                    
+<!-- dtl:block:TicketFreeTime -->
+                    <tr name="row_MS_full_TicketFreeTime1and2" style="display: none;">
+                        <td class="contentkey">$Text{"$QData{"TicketFreeTimeKey"}"}:</td>
+                        <td class="contentvalue">$Data{"TicketFreeTime"}</td>
+                    </tr>
+<!-- dtl:block:TicketFreeTime -->
+					
+
+                    <tr>
+                        <td class="contentkey">$Text{"IMEI"}:</td>
+                        <td class="contentvalue"> <input type="text" name="WIND_IMEI" id="WIND_IMEI"  value="" size="30"/></td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="contentkey">$Text{"ID Linea"}:</td>
+                        <td class="contentvalue"> <input type="text" name="WIND_IDLINEA" id="WIND_IDLINEA" value="" size="30"/></td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="contentkey">$Text{"Ambito TT"}:</td>
+                        <td class="contentvalue"> 
+                        	<select name="WIND_AMBITOTT" id="WIND_AMBITOTT">
+  								<option value="">-</option>
+  							</select>
+  						</td>
+                    </tr>
+
+                    <tr>
+                        <td class="contentkey">$Text{"Tipo Linea"}:</td>
+                        <td class="contentvalue"> 
+                        	<select name="WIND_TIPOLINEA" id="WIND_TIPOLINEA">
+  								<option value="">-</option>
+  							</select>
+  						</td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="contentkey">$Text{"MNP Type"}:</td>
+                        <td class="contentvalue">
+                        	<select name="WIND_MNPTYPE" id="WIND_MNPTYPE">
+  								<option value="">-</option>
+  							</select>
+  						</td>
+                    </tr>
+
+                    <tr>
+                        <td class="contentkey">$Text{"Indirizzo"}:</td>
+                        <td class="contentvalue"> <input type="text" name="WIND_INDIRIZZO" id="WIND_INDIRIZZO" value="" size="30"/></td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="contentkey">$Text{"Comune"}:</td>
+                        <td class="contentvalue"> <input type="text" name="WIND_COMUNE" id="WIND_COMUNE" value="" size="30"/></td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="contentkey">$Text{"Provincia"}:</td>
+                        <td class="contentvalue"> <input type="text" name="WIND_PROVINCIA" id="WIND_PROVINCIA" value="" size="30"/></td>
+                    </tr>
+                                        
+                    <tr>
+                        <td class="contentkey">$Text{"CAP"}:</td>
+                        <td class="contentvalue"> <input type="text" name="WIND_CAP" id="WIND_CAP" value="" size="30"/></td>
+                    </tr>
+                    
+<!-- Wind (fine) -->
+
+
+
+
+                </table>
+                <br/>
+                <input class="button" id="submitRichText" accesskey="g" type="submit" name="Create" value="$Text{"Create"}" onclick="return submit_compose();"/>
+            </form>
+            <form action="$Env{"CGIHandle"}" method="post" name="spelling" target="spelling">
+                <input type="hidden" name="Action" value="AgentSpelling"/>
+                <input type="hidden" name="Body" value=""/>
+                <input type="hidden" name="spell_lang" value=""/>
+            </form>
+            <form action="$Env{"CGIHandle"}" method="post" name="customer" target="customer">
+                <input type="hidden" name="Action" value="AdminCustomerUser"/>
+                <input type="hidden" name="Nav" value="None"/>
+                <input type="hidden" name="Subject" value=""/>
+                <input type="hidden" name="What" value=""/>
+            </form>
+        </td>
+    </tr>
+</table>
+<!-- end form -->
+<div id="CustomerTickets"></div>
+<script>
+	if( document.getElementsByName("TicketFreeKey16") && document.getElementsByName("TicketFreeKey16").length > 0 ){
+		(document.getElementsByName("TicketFreeKey16")[0]).parentNode.parentNode.style.display='none';
+	}
+</script>

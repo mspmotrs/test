@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<otrs_stats>
+<Cache>0</Cache>
+<Description>Questa statistica estrae il numero di ticket raggruppati per coda e stato. 
+
+I parametri dinamici sono costituiti da:
+
+- Gli stati da visualizzare (costituiranno le colonne del report);
+
+- Un range di date in cui deve cadere la creazione del ticket.
+
+Il report ed i dati in esso mostrati saranno relativi alle code dei gruppi MVNE con l'esclusione delle code PM-Frodi e MVNE-Backend-Frodi.</Description>
+<File></File>
+<Format>CSV</Format>
+<Format>Print</Format>
+<Object>Ticket</Object>
+<ObjectModule>Kernel::System::Stats::Dynamic::Ticket</ObjectModule>
+<ObjectName>TicketAccumulation</ObjectName>
+<Permission>Atlantic-BackEnd-CCOD</Permission>
+<Permission>Atlantic-DEV-CCOD</Permission>
+<Permission>CasinoGames-BackEnd</Permission>
+<Permission>Everis-DEV-KM</Permission>
+<Permission>GameAccount-BackEnd</Permission>
+<Permission>MVNE-BE-BSS-DMining</Permission>
+<Permission>DEV-DataMining</Permission>
+<Permission>Lottomatica-BackEnd</Permission>
+<Permission>MVNE-BackEnd</Permission>
+<Permission>MVNE-BackEnd-CMT</Permission>
+<Permission>MVNE-BackEnd-CMT2</Permission>
+<Permission>MVNE-BackEnd-DWH</Permission>
+<Permission>MVNE-BackEnd-DWH2</Permission>
+<Permission>MVNE-BackEnd-KM</Permission>
+<Permission>MVNE-BackEnd-PW</Permission>
+<Permission>MVNE-BackEnd-PW2</Permission>
+<Permission>MVNE-BackEnd2</Permission>
+<Permission>MVNE-DEV-BSS</Permission>
+<Permission>MVNE-DEV-Network</Permission>
+<Permission>MVNE-DEV-OTRS</Permission>
+<Permission>MVNE-DEV-RAS-FMS</Permission>
+<Permission>MVNE-DEV-SAPRMCA</Permission>
+<Permission>MVNE-DEV-Security</Permission>
+<Permission>MVNE-DEV-VAS</Permission>
+<Permission>MVNE-FrontEnd</Permission>
+<Permission>MVNE-FrontEnd-CMT</Permission>
+<Permission>MVNE-FrontEnd-DWH</Permission>
+<Permission>MVNE-FrontEnd-GUI</Permission>
+<Permission>MVNE-FrontEnd-PW</Permission>
+<Permission>MVNE-FrontEnd-SIEBEL</Permission>
+<Permission>PI-BackEnd</Permission>
+<Permission>PI-BackEnd-Alarm</Permission>
+<Permission>PM-COPS</Permission>
+<Permission>PM-RAFM</Permission>
+<Permission>PM-Technology</Permission>
+<StatType>dynamic</StatType>
+<SumCol>1</SumCol>
+<SumRow>1</SumRow>
+<Title>Numerosità ticket per stato e per coda (MVNE) (2014-02-12).</Title>
+<UseAsRestriction Element="CreatedQueueIDs" Fixed="1">
+<SelectedValues>Atlantic-BackEnd-CCOD</SelectedValues>
+<SelectedValues>Atlantic-DEV-CCOD</SelectedValues>
+<SelectedValues>CasinoGames-BE</SelectedValues>
+<SelectedValues>Everis-DEV-KM</SelectedValues>
+<SelectedValues>GameAccount-BE</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-DMining</SelectedValues>
+<SelectedValues>DEV-DataMining</SelectedValues>
+<SelectedValues>Lottomatica-BE</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-Billing</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-DWH</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-EAI</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-FMS</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-Portali</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-RAS</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-SIEBEL</SelectedValues>
+<SelectedValues>MVNE-BE-EVERIS-KM</SelectedValues>
+<SelectedValues>MVNE-BE-Network</SelectedValues>
+<SelectedValues>MVNE-BE-OTRS</SelectedValues>
+<SelectedValues>MVNE-BE-REPLY-CMT</SelectedValues>
+<SelectedValues>MVNE-BE-REPLY-PW</SelectedValues>
+<SelectedValues>MVNE-BE-SAPRMCA</SelectedValues>
+<SelectedValues>MVNE-BE-Search Console</SelectedValues>
+<SelectedValues>MVNE-BE-Security</SelectedValues>
+<SelectedValues>MVNE-BE-VAS</SelectedValues>
+<SelectedValues>MVNE-DEV-BSS</SelectedValues>
+<SelectedValues>MVNE-DEV-Network</SelectedValues>
+<SelectedValues>MVNE-DEV-OTRS</SelectedValues>
+<SelectedValues>MVNE-DEV-RAS-FMS</SelectedValues>
+<SelectedValues>MVNE-DEV-SAPRMCA</SelectedValues>
+<SelectedValues>MVNE-DEV-Security</SelectedValues>
+<SelectedValues>MVNE-DEV-VAS</SelectedValues>
+<SelectedValues>MVNE-FE-GUI</SelectedValues>
+<SelectedValues>MVNE-FE-PI</SelectedValues>
+<SelectedValues>MVNE-FE-PI-Alarm</SelectedValues>
+<SelectedValues>MVNE-FE-SIEBEL</SelectedValues>
+<SelectedValues>MVNE-FE-SIEBEL-Business</SelectedValues>
+<SelectedValues>MVNE-FE-SIEBEL-Consumer</SelectedValues>
+<SelectedValues>MVNE-FE-SIEBEL-FromBE</SelectedValues>
+<SelectedValues>PM-COPS</SelectedValues>
+<SelectedValues>PM-RAFM</SelectedValues>
+<SelectedValues>PM-Technology</SelectedValues>
+<SelectedValues>PosteItaliane-OUT</SelectedValues>
+<SelectedValues>PosteItaliane-OUT-Alarm</SelectedValues>
+<SelectedValues>PosteItaliane-OUT-TMP</SelectedValues>
+<SelectedValues>REPLY-DEV-CMT</SelectedValues>
+<SelectedValues>REPLY-DEV-PW</SelectedValues>
+<SelectedValues>ERICSSON-BE</SelectedValues>
+<SelectedValues>ERICSSON-OUT-Alarm</SelectedValues>
+<SelectedValues>MVNE-FE-Ericsson-Alarm</SelectedValues>
+<SelectedValues>MVNE-FE-Wind-Alarm</SelectedValues>
+<SelectedValues>MVNE-FE-Wind-Alarm[ERICSSON]</SelectedValues>
+<SelectedValues>WIND-ERICSSON-OUT-Alarm</SelectedValues>
+<SelectedValues>WIND-OUT</SelectedValues>
+<SelectedValues>WIND-OUT-Alarm</SelectedValues>
+<SelectedValues>WIND-OUT-Alarm[ERICSSON]</SelectedValues>
+<SelectedValues>WIND-OUT[ERICSSON]</SelectedValues>
+</UseAsRestriction>
+<UseAsRestriction Element="CreatedStateIDs" Fixed="1">
+<SelectedValues>open</SelectedValues>
+<SelectedValues>closed unsuccessful inf</SelectedValues>
+<SelectedValues>closed unsuccessful</SelectedValues>
+<SelectedValues>closed successful</SelectedValues>
+<SelectedValues>pending reminder</SelectedValues>
+<SelectedValues>in progress</SelectedValues>
+<SelectedValues>pending auto close-</SelectedValues>
+<SelectedValues>pending auto close+</SelectedValues>
+<SelectedValues>Sospeso</SelectedValues>
+<SelectedValues>RisoltoNRI</SelectedValues>
+<SelectedValues>RisoltoNoACT</SelectedValues>
+<SelectedValues>ChiusoNRI</SelectedValues>
+<SelectedValues>ChiusoNoACT</SelectedValues>
+</UseAsRestriction>
+<UseAsRestriction Element="CreateTime" Fixed="0" TimeStart="2009-01-01 00:00:00" TimeStop="2014-12-31 23:59:59">
+</UseAsRestriction>
+<UseAsValueSeries Element="QueueIDs" Fixed="1">
+<SelectedValues>Atlantic-BackEnd-CCOD</SelectedValues>
+<SelectedValues>Atlantic-DEV-CCOD</SelectedValues>
+<SelectedValues>CasinoGames-BE</SelectedValues>
+<SelectedValues>Everis-DEV-KM</SelectedValues>
+<SelectedValues>GameAccount-BE</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-DMining</SelectedValues>
+<SelectedValues>DEV-DataMining</SelectedValues>
+<SelectedValues>Lottomatica-BE</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-Billing</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-DWH</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-EAI</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-FMS</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-Portali</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-RAS</SelectedValues>
+<SelectedValues>MVNE-BE-BSS-SIEBEL</SelectedValues>
+<SelectedValues>MVNE-BE-EVERIS-KM</SelectedValues>
+<SelectedValues>MVNE-BE-Network</SelectedValues>
+<SelectedValues>MVNE-BE-OTRS</SelectedValues>
+<SelectedValues>MVNE-BE-REPLY-CMT</SelectedValues>
+<SelectedValues>MVNE-BE-REPLY-PW</SelectedValues>
+<SelectedValues>MVNE-BE-SAPRMCA</SelectedValues>
+<SelectedValues>MVNE-BE-Search Console</SelectedValues>
+<SelectedValues>MVNE-BE-Security</SelectedValues>
+<SelectedValues>MVNE-BE-VAS</SelectedValues>
+<SelectedValues>MVNE-DEV-BSS</SelectedValues>
+<SelectedValues>MVNE-DEV-Network</SelectedValues>
+<SelectedValues>MVNE-DEV-OTRS</SelectedValues>
+<SelectedValues>MVNE-DEV-RAS-FMS</SelectedValues>
+<SelectedValues>MVNE-DEV-SAPRMCA</SelectedValues>
+<SelectedValues>MVNE-DEV-Security</SelectedValues>
+<SelectedValues>MVNE-DEV-VAS</SelectedValues>
+<SelectedValues>MVNE-FE-GUI</SelectedValues>
+<SelectedValues>MVNE-FE-PI</SelectedValues>
+<SelectedValues>MVNE-FE-PI-Alarm</SelectedValues>
+<SelectedValues>MVNE-FE-SIEBEL</SelectedValues>
+<SelectedValues>MVNE-FE-SIEBEL-Business</SelectedValues>
+<SelectedValues>MVNE-FE-SIEBEL-Consumer</SelectedValues>
+<SelectedValues>MVNE-FE-SIEBEL-FromBE</SelectedValues>
+<SelectedValues>PM-COPS</SelectedValues>
+<SelectedValues>PM-RAFM</SelectedValues>
+<SelectedValues>PM-Technology</SelectedValues>
+<SelectedValues>PosteItaliane-OUT</SelectedValues>
+<SelectedValues>PosteItaliane-OUT-Alarm</SelectedValues>
+<SelectedValues>PosteItaliane-OUT-TMP</SelectedValues>
+<SelectedValues>REPLY-DEV-CMT</SelectedValues>
+<SelectedValues>REPLY-DEV-PW</SelectedValues>
+<SelectedValues>SIEBEL-IN</SelectedValues>
+<SelectedValues>Vodafone-OUT</SelectedValues>
+<SelectedValues>ERICSSON-BE</SelectedValues>
+<SelectedValues>ERICSSON-OUT-Alarm</SelectedValues>
+<SelectedValues>MVNE-FE-Ericsson-Alarm</SelectedValues>
+<SelectedValues>MVNE-FE-Wind-Alarm</SelectedValues>
+<SelectedValues>MVNE-FE-Wind-Alarm[ERICSSON]</SelectedValues>
+<SelectedValues>WIND-ERICSSON-OUT-Alarm</SelectedValues>
+<SelectedValues>WIND-OUT</SelectedValues>
+<SelectedValues>WIND-OUT-Alarm</SelectedValues>
+<SelectedValues>WIND-OUT-Alarm[ERICSSON]</SelectedValues>
+<SelectedValues>WIND-OUT[ERICSSON]</SelectedValues>
+</UseAsValueSeries>
+<UseAsXvalue Element="StateIDs">
+<SelectedValues>open</SelectedValues>
+<SelectedValues>closed unsuccessful inf</SelectedValues>
+<SelectedValues>closed unsuccessful</SelectedValues>
+<SelectedValues>closed successful</SelectedValues>
+<SelectedValues>pending reminder</SelectedValues>
+<SelectedValues>in progress</SelectedValues>
+<SelectedValues>pending auto close-</SelectedValues>
+<SelectedValues>pending auto close+</SelectedValues>
+<SelectedValues>Sospeso</SelectedValues>
+<SelectedValues>RisoltoNRI</SelectedValues>
+<SelectedValues>RisoltoNoACT</SelectedValues>
+<SelectedValues>ChiusoNRI</SelectedValues>
+<SelectedValues>ChiusoNoACT</SelectedValues>
+</UseAsXvalue>
+<Valid>1</Valid>
+</otrs_stats>

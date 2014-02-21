@@ -87,7 +87,7 @@ print "<ResultStatus>\n";
 print "<StatusCode>0</StatusCode>\n";
 
 
- print "<TicketID>wind-1111</TicketID>\n";
+ print "<idTT>wind-1111</idTT>\n";
  
 #if ($XMLrequest =~ m/\<action\>CREATE\<\/action\>/mi)
 #{

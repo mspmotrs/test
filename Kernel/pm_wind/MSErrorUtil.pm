@@ -67,11 +67,11 @@ sub MS_CheckInternalErrorAndSendResponse
 	{
 		$rit = 1;
 		
-		$LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [MS_CheckInternalErrorAndSendResponse]: Rilevato errore interno - InternalCode = $ErrorHash_ptr->{InternalCode}  --  InternalDescr = $ErrorHash_ptr->{InternalDescr}");
+		$LogObject_ptr->Log( Priority => 'notice', Message => "_MSFull_ [MS_CheckInternalErrorAndSendResponse]: Rilevato errore interno - InternalCode = $ErrorHash_ptr->{InternalCode}  --  InternalDescr = $ErrorHash_ptr->{InternalDescr}");
 		
 		if ($ErrorHash_ptr->{StopEsecution})
 		{
-			$LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [MS_CheckInternalErrorAndSendResponse]: L'errore mi costringe a terminare l'esecuzione.");
+			$LogObject_ptr->Log( Priority => 'notice', Message => "_MSFull_ [MS_CheckInternalErrorAndSendResponse]: L'errore mi costringe a terminare l'esecuzione.");
 			
 			MS_Response_GenericInternalError_BuildAndSend();
 			

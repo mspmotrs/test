@@ -24,6 +24,7 @@ use lib "$Bin/../cpan-lib";
 
 # ----------------- Moduli custom necessari ------------------
 use MSTicketUtil;
+use MSErrorUtil;
 # ----------------- Moduli custom necessari (fine) ------------------
 
 
@@ -36,9 +37,9 @@ use MSTicketUtil;
 # 0 -> se ERRORE
 # 1 -> se ok
 sub MS_do_action
-{	
+{
    my $MS_ConfigHash_ptr = shift;
-
+	#$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "************ do ACTION chiamata *********");
 	my $rit = 0;
 	
 	if(exists($MS_ConfigHash_ptr->{RequestHash}))
@@ -53,13 +54,14 @@ sub MS_do_action
 		}
 		elsif($MS_ConfigHash_ptr->{RequestHash}->{RequestType} eq $MS_ConfigHash_ptr->{RequestHash}->{RequestTypeNOTIFY})
 		{
+			#$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "************ do ACTION chiama NOTIFY *********");
 			$rit = MS_do_Notify($MS_ConfigHash_ptr);
 		}
 		else
 		{
-			if($MS_ConfigHash_ptr->{PM_Wind_settings}->{log_level} >= 2)
+			if($MS_ConfigHash_ptr->{PM_Wind_settings}->{log_level} >= 1)
 			{
-					$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} [WARNING] Chiamata MS_do_action() su una Request ma il tipo della request non risulta conosciuto: $MS_ConfigHash_ptr->{RequestHash}->{RequestType}");
+					$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} [WARNING] Chiamata MS_do_action() su una Request ma il tipo della request non risulta conosciuto: $MS_ConfigHash_ptr->{RequestHash}->{RequestType}");
 			}
 		}
 	}
@@ -116,9 +118,12 @@ sub MS_do_Create
 				$sub_err_identity_number = 40;
 			}
 			
+			#my $LogObj_ptr = $MS_ConfigHash_ptr->{OTRS_LogObject};
+			#$LogObj_ptr->Log( Priority => 'notice', Message => "---------------------- MS_do_Create  chiamata ----");
 			#setto l'errore che verra' controllato nella subroutine a monte...
 			MS_AssignInternalErrorCode( MS_WhoAmI(), $sub_err_identity_number, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
-			#$errors_ptr->{StopEsecution} = 1; # "prenoto" una exit	
+			#$errors_ptr->{StopEsecution} = 1; # "prenoto" una exit
+			#$LogObj_ptr->Log( Priority => 'notice', Message => "---------------------- MS_do_Create  fine ----");
 		}
 
 		
@@ -142,7 +147,9 @@ sub MS_do_Update
 
 	if(exists($MS_ConfigHash_ptr->{RequestHash}))
 	{
-
+		my $result = MS_UpdateObject($MS_ConfigHash_ptr);
+		
+		$MS_ConfigHash_ptr->{StatusToSendOnUpdate} = 'APERTO'; #sembra che ora sia richiesto anche questo
 	}
 
 	return $rit;
@@ -162,7 +169,7 @@ sub MS_do_Notify
 	
 	if(exists($MS_ConfigHash_ptr->{RequestHash}))
 	{
-
+		my $result = MS_NotifyObject($MS_ConfigHash_ptr);
 	}
 
 	return $rit;

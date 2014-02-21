@@ -33,6 +33,46 @@ use MSErrorUtil;
 
 
 
+sub MS_SuppressNamaspaces
+{
+	my $hash_ptr = shift;
+	my $recurse_level = shift;
+	
+	return if(!defined($recurse_level) or $recurse_level>4);
+	#print "\nchiamato...";
+	if(defined($hash_ptr ) and ref($hash_ptr) eq 'HASH') # ->{ns0:OTRS_API}   ->{OTRS_API}
+	{
+		#print "... su hash\n";
+		
+		my @key_list = keys(%{$hash_ptr});
+		#print "KEYLIST = @key_list";
+		#foreach my $key (%{$hash_ptr})
+		for(my $kk=0; $kk<scalar(@key_list); $kk++)
+		{
+			my $key = $key_list[$kk];
+			#print "\KEY = $key";
+			
+			if($key =~ m/^[^\:]+\:(.+)$/i)
+			{
+
+				$hash_ptr->{$1} = delete $hash_ptr->{$key};
+				#print "AAAAAAA";
+					
+				if(ref($hash_ptr->{$1}) eq 'ARRAY' and defined($hash_ptr->{$1}->[1]) and ref($hash_ptr->{$1}->[1]) eq 'HASH')
+				{
+					#print "BBBBBB";
+					$recurse_level++;
+					MS_SuppressNamaspaces($hash_ptr->{$1}->[1], $recurse_level);
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
 
 
 sub MS_XMLCheckParsing
@@ -50,13 +90,13 @@ sub MS_XMLCheckParsing
 		local $SIG{'__DIE__'} = sub { 
 										my $context = shift;
 										my $x="[MS] Errore durante parsing XML: $context\n";
-										$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} $x");
+										$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} $x");
 										      
 										#setto l'errore che verra' controllato nella subroutine a monte...
 										MS_AssignInternalErrorCode( MS_WhoAmI(), 10, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
 										$MS_ConfigHash_ptr->{Errors}->{StopEsecution} = 1; # "prenoto" una exit
 
-										$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "_MSFull_ XML DUMP:\n".$XML_content);
+										$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "_MSFull_ XML DUMP:\n".$XML_content);
 										
 										#Non forzo la exit qui... lo faro' solo nella gestione dell'errore (modulo MSErrorUtil)
 										#die $x;
@@ -78,7 +118,7 @@ sub MS_XMLCheckParsing
 		if($@)
 		{
 			#print "\nL'XML sembra malformato: esco...\n" ; #TODO
-			$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} L'XML sembra malformato... esco.");
+			$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} L'XML sembra malformato... esco.");
       
 			#setto l'errore che verra' controllato nella subroutine a monte...
 			MS_AssignInternalErrorCode( MS_WhoAmI(), 20, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
@@ -86,7 +126,7 @@ sub MS_XMLCheckParsing
 			
 			
 			
-			$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "_MSFull_ XML DUMP:\n".$XML_content);
+			$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "_MSFull_ XML DUMP:\n".$XML_content);
 										
 			#Non forzo la exit qui... lo faro' solo nella gestione dell'errore (modulo MSErrorUtil)
 			#exit(1);
@@ -111,10 +151,13 @@ sub MS_XMLCheckParsing
 			my $logConf = $MS_ConfigHash_ptr->{OTRS_ConfigObject}->Get( 'PM_Wind_settings' );
 			if(exists($logConf->{log_level}) and $logConf->{log_level} >2)
 			{
-				$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "_MSFull_ XML DUMP:\n".$XML_content);
+				$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "_MSFull_ XML DUMP:\n".$XML_content);
 			}
 		
-			return \@XMLHash;
+			my $ptr = \@XMLHash;
+			MS_SuppressNamaspaces($ptr->[0], 0);
+			return $ptr;
+			#return \@XMLHash;
 			#exit(0);
 		}
 	}	

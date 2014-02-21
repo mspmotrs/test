@@ -76,7 +76,7 @@ sub MS_LoadAndCheckConfigForWind
 	}
 	else
 	{
-		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'PM_Wind_settings' nel Ticket.xml. Interrompo l'esecuzione.");
+		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'PM_Wind_settings' nel Ticket.xml. Interrompo l'esecuzione.");
       
       #setto l'errore che verra' controllato nella subroutine a monte...
       MS_AssignInternalErrorCode( MS_WhoAmI(), 10, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
@@ -96,7 +96,7 @@ sub MS_LoadAndCheckConfigForWind
 	}
 	else
 	{
-		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'Category_Incident_PM_Wind' nel Ticket.xml. Interrompo l'esecuzione.");
+		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'Category_Incident_PM_Wind' nel Ticket.xml. Interrompo l'esecuzione.");
       
       #setto l'errore che verra' controllato nella subroutine a monte...
       MS_AssignInternalErrorCode( MS_WhoAmI(), 20, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
@@ -117,7 +117,7 @@ sub MS_LoadAndCheckConfigForWind
 	}
 	else
 	{
-		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'Category_Alarm_PM_Wind' nel Ticket.xml. Interrompo l'esecuzione.");
+		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'Category_Alarm_PM_Wind' nel Ticket.xml. Interrompo l'esecuzione.");
       
       #setto l'errore che verra' controllato nella subroutine a monte...
       MS_AssignInternalErrorCode( MS_WhoAmI(), 30, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
@@ -137,7 +137,7 @@ sub MS_LoadAndCheckConfigForWind
 	}
 	else
 	{
-		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'Category_Alarm_Wind_PM' nel Ticket.xml. Interrompo l'esecuzione.");
+		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'Category_Alarm_Wind_PM' nel Ticket.xml. Interrompo l'esecuzione.");
       
       #setto l'errore che verra' controllato nella subroutine a monte...
       MS_AssignInternalErrorCode( MS_WhoAmI(), 40, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});
@@ -157,7 +157,7 @@ sub MS_LoadAndCheckConfigForWind
 	}
 	else
 	{
-		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'AmbitoTT_PM_Wind' nel Ticket.xml. Interrompo l'esecuzione.");
+		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} [ERRORE] Non trovo la sezione 'AmbitoTT_PM_Wind' nel Ticket.xml. Interrompo l'esecuzione.");
       
       #setto l'errore che verra' controllato nella subroutine a monte...
       MS_AssignInternalErrorCode( MS_WhoAmI(), 40, \$MS_ConfigHash_ptr->{Errors}->{InternalCode}, \$MS_ConfigHash_ptr->{Errors}->{InternalDescr});

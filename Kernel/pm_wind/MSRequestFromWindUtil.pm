@@ -11,6 +11,7 @@ our @EXPORT = qw(MS_RequestParsing MS_CheckRequestSemantic);
 #our @EXPORT_OK = qw(saluta2);
 
 
+use MIME::Base64;
 
 
 # use ../../ as lib location
@@ -21,15 +22,14 @@ use lib "$Bin/../cpan-lib";
 
 
 
-
 # ----------------- Moduli custom necessari ------------------
 use MSXMLUtil;
 use MSTicketUtil;
 
 
 
-
-
+use Data::Dumper;
+my $MS_DEBUG = 0;
 
 
 
@@ -58,7 +58,12 @@ use MSTicketUtil;
 
 #in questo contesto vale solo per gli Alarm
 my %RequestBody_Rules_onCreate = ( 
-	TickedIDWind =>	{	#in Create da Wind (quindi alarm) questo id e' obbligatorio...
+	#TickedIDWind =>	{	#in Create da Wind (quindi alarm) questo id e' obbligatorio...
+	#					is_mandatory => 1, 
+	#					#is_string => 1,
+	#				},
+	
+	TicketID =>	{	#in Create da Wind (quindi alarm) questo id e' obbligatorio...
 						is_mandatory => 1, 
 						#is_string => 1,
 					},
@@ -76,11 +81,11 @@ my %RequestBody_Rules_onCreate = (
 
 				},
 							
-	Status =>	{
-						is_mandatory => 1, 
-						possibleValues => ['APERTO'], 
-
-				},
+	#Status =>	{
+	#					is_mandatory => 1, 
+	#					possibleValues => ['APERTO'], 
+	#
+	#			},
 							
 	priority =>	{
 						is_mandatory => 1, 
@@ -113,69 +118,80 @@ my %RequestBody_Rules_onCreate = (
 					},
 							
 	TimestampTT =>	{
-						is_mandatory => 1, 
+						#is_mandatory => 1,
+						canBeEmpty => 1,
 						is_datetime => 1,
 
 					},
 							
 							
 	startDateMalfunction =>	{
+								canBeEmpty => 1,
 								is_datetime => 1,
 							},
 							
 
 	endDateMalfunction =>	{
+								canBeEmpty => 1,
 								is_datetime => 1,
 							},
 							
 
-	segmentCustomer =>	{ },
+	segmentCustomer =>	{ canBeEmpty => 1, },
 							
 
 	msisdn =>	{
+						canBeEmpty => 1,
 						is_decimalNumber => 1,
 				},
 							
 
 	imsi =>	{
+						canBeEmpty => 1,
 						is_decimalNumber => 1,
 			},
 							
 
 	iccid =>	{
+						canBeEmpty => 1,
 						is_string => 1,
 				},
 							
 
-	idLinea =>	{ },	
+	idLinea =>	{ canBeEmpty => 1, },	
 	
 
 	tipoLinea =>	{
+							canBeEmpty => 1,
 						possibleValues => ['GNR', 'PSTN', 'ISDN'], 
 					},	
 	
 
 	mnpType =>	{
+						canBeEmpty => 1,
 						possibleValues => ['DONATING', 'RECIPIENT'], 
 				},	
 	
 
 	imei =>	{
+						canBeEmpty => 1,
 						is_decimalNumber => 1,
 			},	
 	
 	
-	Referente => { },	
+	referente => { canBeEmpty => 1, },	
 	
-	Nota =>	{ },	
+	#Nota =>	{ },
+	#ListOfNotes => {},
 	
-	address => { },	
+	address => { canBeEmpty => 1, },	
 	
-	prov =>	{ },	
+	prov =>	{ canBeEmpty => 1, },	
 	
-	city =>	{ },	
+	city =>	{ canBeEmpty => 1, },	
 	
 	cap =>	{
+				canBeEmpty => 1,
 				is_decimalNumber => 1,
 			},
 							
@@ -191,7 +207,7 @@ my %RequestBody_Rules_onUpdate = (
 						#is_string => 1,
 				},
 
-	TickedIDWind =>	{
+	TicketIDWind =>	{
 						is_mandatory => 1, 
 						#is_string => 1,
 					},			
@@ -201,35 +217,53 @@ my %RequestBody_Rules_onUpdate = (
 						possibleValues => ['UPDATE'],  #REOPEN | UPDATE  --> UPDATE vale solo per ALARM. Dubbio: ma la REOPEN vale per gli Alarm??
 				},
 							
-	Status =>	{
-						is_mandatory => 1, 
-						possibleValues => ['APERTO', 'IN LAVORAZIONE'],
-				},
+	#Status =>	{
+	#					is_mandatory => 1, 
+	#					possibleValues => ['APERTO', 'IN LAVORAZIONE'],
+	#			},
 							
 							
-	priority =>	{ possibleValues => ['0', '1', '2', '3'],  },
+	priority =>	{
+						is_mandatory => 1,
+						possibleValues => ['0', '1', '2', '3'],
+					},
 		
 		
 	#CategoryTT   (CREATE=M - UPDATE=O - NOTIFY=NO)
 	#verificare se e' il caso di controllare la lista dei valori presa dal Ticket.xml magari usando "specialCheck"
 	CategoryTT =>	{
+						is_mandatory => 1,
 						specialCheck =>  sub { return 0; }, 
 						specialCheckMessage => '', 
 					},
+	
 					
+	AmbitoTT =>	{
+						is_mandatory => 1, 
+						possibleValues => ['MOBILE NW', 'MOBILE IT', 'ALTRO', 'INTERCONNESSIONE WHOLELINE', 'CARRIER SELECTION'], 
+				},
+	
+	
 												
 	TimestampTT =>	{
-						is_mandatory => 1, 
+						#is_mandatory => 1,
+						canBeEmpty => 1,
 						is_datetime => 1,
 					},
 							
-	Nota =>	{ is_mandatory => 1, },
+	#Nota =>	{ is_mandatory => 1, },
+	#ListOfNotes => { #is_mandatory => 1,
+	#					 },
 	
 							
-	startDateMalfunction =>	{ is_datetime => 1, },
+	startDateMalfunction =>	{
+									 canBeEmpty => 1,
+									 is_datetime => 1, },
 							
 
-	endDateMalfunction =>	{ is_datetime => 1, },
+	endDateMalfunction =>	{
+									 canBeEmpty => 1,
+									 is_datetime => 1, },
 
 );
 
@@ -243,7 +277,7 @@ my %RequestBody_Rules_onNotify = (
 						#is_string => 1,
 				},
 
-	TickedIDWind =>	{
+	TicketIDWind =>	{
 						is_mandatory => 1, 
 						#is_string => 1,
 					},			
@@ -257,40 +291,59 @@ my %RequestBody_Rules_onNotify = (
 						is_mandatory => 1, 
 						possibleValues => ['APERTO', 'IN LAVORAZIONE', 'SOSPESO', 'RESTITUITO', 'EXPIRED'],
 				},
+	
+	Type =>	{	
+						#is_mandatory => 1,
+						canBeEmpty => 1,
+						possibleValues => ['ALARM', 'INCIDENT'],
+
+				},
 					
 	Causale =>	{
+						canBeEmpty => 1, #MS 20140204: aggiunto, ma non sono sicuro di questa cosa
+						
 						possibleValues => ['IN ATTESA INFORMAZIONI', 'NON DI COMPETENZA', 'RISOLTO', 'NON RISCONTRATO', 'RISOLTO NO ACTION', #questi si applicano allo stato "RESTITUITO"
 											'ACCESSO AL SITO', 'ATTIVITA CONGIUNTA', #questi si applicano allo stato "SOSPESO"
 											'' #vuoto... che non ho capito quando si applica... forse per gli Alarm?
 											],
 				},		
 							
-	priority =>	{ possibleValues => ['0', '1', '2', '3'],  },
+	priority =>	{
+					 #canBeEmpty => 1,
+					 is_mandatory => 1, 
+					 possibleValues => ['0', '1', '2', '3'],  },
 		
 		
 	#CategoryTT   (CREATE=M - UPDATE=O - NOTIFY=NO)
 	#verificare se e' il caso di controllare la lista dei valori presa dal Ticket.xml magari usando "specialCheck"
 	CategoryTT =>	{
+						#canBeEmpty => 1,
+						is_mandatory => 1, 
 						specialCheck =>  sub { return 0; }, 
 						specialCheckMessage => '', 
 					},
 					
 												
 	TimestampTT =>	{
-						is_mandatory => 1, 
+						#is_mandatory => 1,
+						canBeEmpty => 1,
 						is_datetime => 1,
 					},
 							
-	Nota =>	{ is_mandatory => 1, },
+	#Nota =>	{ is_mandatory => 1, },
+	#ListOfNotes =>	{ #is_mandatory => 1,
+	#					 },
 	
 							
-	AmbitoTT =>	{ 
-					is_datetime => 1, 
+	AmbitoTT =>	{
+					#canBeEmpty => 1,
+					is_mandatory => 1, 
 					possibleValues => ['MOBILE NW', 'MOBILE IT', 'ALTRO', 'INTERCONNESSIONE WHOLELINE', 'CARRIER SELECTION'],
 				},
 							
 
-	ExpDate =>	{ is_datetime => 1, },
+	#ExpDate =>	{ is_datetime => 1, },
+	ExpirationDate =>	{ is_datetime => 1, },
 );
 
 
@@ -388,6 +441,11 @@ sub MS_RequestParsing
 		#proviamo a fare il parsing
 		my $XMLHash_ptr = MS_XMLCheckParsing($MS_ConfigHash_ptr, $MS_ConfigHash_ptr->{RequestHash}->{RequestContent});
 		
+		
+		#Debug
+		print "\n\nREQUEST from EAI parser dump:\n".Dumper($XMLHash_ptr) if($MS_DEBUG);
+		
+		
 		#se le cose tornano...
 		if ( defined($XMLHash_ptr) and (ref $XMLHash_ptr eq 'ARRAY') and defined($XMLHash_ptr->[0]) and (ref $XMLHash_ptr->[0] eq 'HASH') )
 		{
@@ -422,12 +480,35 @@ sub MS_RequestToRequestHash
 	#es.:
 	#if(exists($XMLHash_ptr->[0]->{OTRS_API}[1]->{TicketRequest}[1]->{SourceChannel}[1]->{Content}))
 	my $rootTag = $XMLHash_ptr->[0]->{OTRS_API}[1]->{TicketRequest}[1];
-	my $rootTagHeader = $rootTag;
-	my $rootTagBody = $rootTag;
+	
+	if (exists($rootTag->{CreateTTInput})) #create
+	{
+		$rootTag = $rootTag->{CreateTTInput}[1];
+		#$ConfigHash_ptr->{InputRequestType}->{RequestType} = 'CREATE';
+		$RequestHash_prt->{InputRequestType} = 'CREATE';
+	}
+	elsif (exists($rootTag->{InputUpdate})) #update
+	{
+		$rootTag = $rootTag->{InputUpdate}[1];
+		$RequestHash_prt->{InputRequestType} = 'UPDATE';
+	}
+	elsif (exists($rootTag->{NotifyUpdate})) #notify
+	{
+		$rootTag = $rootTag->{NotifyUpdate}[1];
+		$RequestHash_prt->{InputRequestType} = 'NOTIFY';
+	}
+	
+	
+	my $rootTagHeader = $rootTag->{Header}[1];
+	my $rootTagBody = $rootTag->{Body}[1];
 
-
+	print "\nAction RILEVATA: ".$rootTagBody->{Action}[1]->{Content}  if($MS_DEBUG);
+	
 	#per prima cosa devo stabilire se si tratta di una request di Create, Update o Notify
     my $req_type = MS_FindRequestType($rootTagBody->{Action}[1]->{Content}, $RequestHash_prt);
+	 
+	 
+	 print "\nREQ_TYPE calcolato: ".$req_type  if($MS_DEBUG);
     
     if(!$req_type)
     {
@@ -439,6 +520,8 @@ sub MS_RequestToRequestHash
     {
     	$RequestHash_prt->{RequestType} = $req_type;
     	
+		print "\nRequestType impostato a: ".$RequestHash_prt->{RequestType}  if($MS_DEBUG);
+		
     	#in base al tipo di richiesta stabiliamo le regole da usare per la validazione
     	my $reqHeaderRules_ptr = \%RequestHeader_Rules; #l'header e' costante tra i vari tipi
     	my $reqBodyRules_forAttachment_ptr = \%RequestBody_Rules_forAttachment; #costante tra i vari tipi
@@ -486,7 +569,7 @@ sub MS_RequestToRequestHash
 		}  
 		
 		
-    	#... poi il body (tranne gli allegati)...
+    	#... poi il body (tranne gli allegati)...e ora anche tranne la nota (che non e' pi nel tag Nota ma in ListOfNotes)
     	$check = 0;
 	 	foreach my $key (keys(%{$reqBodyRules_ptr}))
 		{
@@ -494,7 +577,7 @@ sub MS_RequestToRequestHash
 			$check = MS_CheckRules($RequestHash_prt, $rootTagBody, $reqBodyRules_ptr, $key);
 			if($check)
 			{
-				$RequestHash_prt->{$key} = $rootTagBody->{$key}[1]->{Content} if(exists($rootTagBody->{$key}[1]->{Content}));
+				$RequestHash_prt->{$key} = $rootTagBody->{$key}[1]->{Content} if(exists($rootTagBody->{$key}[1]->{Content}) and $rootTagBody->{$key}[1]->{Content} !~ m/^\s*$/i); #parte sul "vuoto" aggiunta il 20140205 per evitare problemi con i campi opzionali vuoti che precedentemente non erano permessi...
 			}
 			else
 			{
@@ -507,6 +590,34 @@ sub MS_RequestToRequestHash
 #		print Dumper($reqBodyRules_forAttachment_ptr);
 #		print "\n";
 		#debug (fine)
+
+
+		#... la nota....
+						#<ListOfNotes>
+						#  <Note>
+						#    <Team>str1234</Team>
+						#    <CreationDate>str1234</CreationDate>
+						#    <Description>str1234</Description>
+						#  </Note>
+						#</ListOfNotes>
+	    if(exists($rootTagBody->{ListOfNotes}))
+	    {
+				if(exists($rootTagBody->{ListOfNotes}[1]->{Note}))
+				{
+					if(exists($rootTagBody->{ListOfNotes}[1]->{Note}[1]->{Description}) )
+					{
+						$RequestHash_prt->{ListOfNotes} = {};
+						$RequestHash_prt->{ListOfNotes}->{Description} = $rootTagBody->{ListOfNotes}[1]->{Note}[1]->{Description}[1]->{Content};
+						
+						$RequestHash_prt->{Nota} = $RequestHash_prt->{ListOfNotes}->{Description}; #legacy
+						
+						$RequestHash_prt->{ListOfNotes}->{Team} = $rootTagBody->{ListOfNotes}[1]->{Note}[1]->{Team}[1]->{Content} if(exists($rootTagBody->{ListOfNotes}[1]->{Note}[1]->{Team}));
+						$RequestHash_prt->{ListOfNotes}->{CreationDate} = $rootTagBody->{ListOfNotes}[1]->{Note}[1]->{CreationDate}[1]->{Content} if(exists($rootTagBody->{ListOfNotes}[1]->{Note}[1]->{CreationDate}));
+					}
+				}
+		 }
+
+
 		
 		#... e infine gli allegati
 	    if(exists($rootTagBody->{ListOfAttachment}))
@@ -516,7 +627,7 @@ sub MS_RequestToRequestHash
 	    		my $attachmentCOUNT= @{$rootTagBody->{ListOfAttachment}[1]->{Attachment}};
 	
 	 
-	    		for(my $nn=0; $nn < $attachmentCOUNT; $nn++)
+	    		for(my $nn=1; $nn < $attachmentCOUNT; $nn++) #il primo e' vuoto for (my $nn=0; $nn < $attachmentCOUNT; $nn++)
 	    		{
 	
 					#FullFileName
@@ -556,7 +667,7 @@ sub MS_RequestToRequestHash
 						$h_ptr->{FullFileName} = $rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{FullFileName}[1]->{Content} if(exists($rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{FullFileName}[1]->{Content}));
 						$h_ptr->{TypeFile} = $rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{TypeFile}[1]->{Content} if(exists($rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{TypeFile}[1]->{Content}));
 						$h_ptr->{dataCreazione} = $rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{dataCreazione}[1]->{Content} if(exists($rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{dataCreazione}[1]->{Content}));
-						$h_ptr->{FileBody} = $rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{FileBody}[1]->{Content} if(exists($rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{FileBody}[1]->{Content}));
+						$h_ptr->{FileBody} = decode_base64($rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{FileBody}[1]->{Content}) if(exists($rootTagBody->{ListOfAttachment}[1]->{Attachment}[$nn]->{FileBody}[1]->{Content}));
 						
 						push (@{$RequestHash_prt->{AttachedFiles}}, $h_ptr );
 						
@@ -596,19 +707,21 @@ sub MS_FindRequestType
 	my $RequestHash_prt = shift;
 
 	my $rit = '';
-    	
-    if($action  =~ m/^\s*CREATE\s*$/i) #req type = Create
-    {
-    	$rit = $RequestHash_prt->{RequestTypeCREATE}; #'CREATE';	
-    }
-    elsif($action  =~ m/^\s*(?:REOPEN|UPDATE)\s*$/i) #req type = Update
-    {
-    	$rit = $RequestHash_prt->{RequestTypeUPDATE}; #'UPDATE';
-    }
-    elsif($action  =~ m/^\s*(?:DELIVERED|PRESA\s+IN\s+CARICO|SOSPENSIONE|DESOSPENSIONE|RESTITUZIONE|CLOSE)\s*$/i) #req type = Notify
-    {
-    	$rit = $RequestHash_prt->{RequestTypeNOTIFY}; #'NOTIFY';
-    }
+   
+
+	if($action  =~ m/^\s*CREATE\s*$/i) #req type = Create
+	{
+	  $rit = $RequestHash_prt->{RequestTypeCREATE}; #'CREATE';	
+	}
+	elsif($action  =~ m/^\s*(?:REOPEN|UPDATE)\s*$/i) #req type = Update
+	{
+	  $rit = $RequestHash_prt->{RequestTypeUPDATE}; #'UPDATE';
+	}
+	elsif($action  =~ m/^\s*(?:DELIVERED|PRESA\s+IN\s+CARICO|SOSPENSIONE|DESOSPENSIONE|RESTITUZIONE|CLOSE)\s*$/i) #req type = Notify
+	{
+	  $rit = $RequestHash_prt->{RequestTypeNOTIFY}; #'NOTIFY';
+	}
+
 
 	return $rit;
 }
@@ -658,6 +771,13 @@ sub MS_CheckRules
 		#test tag vuoto
 		if( exists($specificRules->{canBeEmpty}) or ($tagContent ne '') )
 		{
+			#se sono su un tag vuoto che lo permette...
+			if (exists($specificRules->{canBeEmpty}) and ($tagContent eq '' or $tagContent =~ m/^\s*$/i))
+			{
+				return 1;
+			}
+			
+			
 			#test tag solo caratteri white (spazi, ecc.)
 			if( exists($specificRules->{canBeSpacesOnly}) or ($tagContent !~ m/^\s*$/) )
 			{
@@ -806,11 +926,14 @@ sub MS_CheckRequestSemantic
 	
 	my $category_is_ok = 0;
 	
+	#$ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "---------------------- MS_CheckRequestSemantic  (chiamata) ----");
+	
 	#se non si tratta di una create recupero le info che mi servono sul ticket
 	if ( ($RequestHash_ptr->{RequestType} eq $RequestHash_ptr->{RequestTypeUPDATE}) or ($RequestHash_ptr->{RequestType} eq $RequestHash_ptr->{RequestTypeNOTIFY}) )
 	{
 		#salvo le info in $ConfigHash_ptr->{Ticket}
-		if(MS_TicketGetInfoShort( $RequestHash_ptr->{TicketID}, $RequestHash_ptr->{TicketID_is_a_TN}, $ConfigHash_ptr->{DBObject}, $ConfigHash_ptr->{Ticket}) )
+		$ConfigHash_ptr->{Ticket} = {};
+		if(MS_TicketGetInfoShort( $RequestHash_ptr->{TicketID}, $RequestHash_ptr->{TicketID_is_a_TN}, $ConfigHash_ptr->{OTRS_DBObject}, $ConfigHash_ptr->{Ticket}) )
 		{
 			if(MS_TicketGetWindType($ConfigHash_ptr->{Ticket}, $ConfigHash_ptr->{PM_Wind_settings}) or 
 				$ConfigHash_ptr->{Ticket}->{WindType} eq $ConfigHash_ptr->{Ticket}->{WindTypeUNKNOW})
@@ -822,30 +945,50 @@ sub MS_CheckRequestSemantic
 					{
 						if($ConfigHash_ptr->{Ticket}->{WindType} eq $ConfigHash_ptr->{Ticket}->{WindTypeALARM})
 						{
-							if(scalar(@{$RequestHash_ptr->{AttachedFiles}}) == 0) #non devono esserci allegati per gli alarm
+							if(!exists($RequestHash_ptr->{AttachedFiles}) or scalar(@{$RequestHash_ptr->{AttachedFiles}}) == 0) #non devono esserci allegati per gli alarm
 							{
 								# #OK...update per ALARM
-								
-								$rit = 1;
+								if (exists($RequestHash_ptr->{startDateMalfunction}) and exists($RequestHash_ptr->{endDateMalfunction}))
+								{
+									my $tmp_compare = MS_StringDateCompare($RequestHash_ptr->{startDateMalfunction}, $RequestHash_ptr->{endDateMalfunction});
+									if ($tmp_compare == 0 || $tmp_compare == 2) #endDateMalfunction uguale o nel futuro rispetto a startDateMalfunction
+									{
+										$rit = 1;
+									}
+									else
+									{
+										$RequestHash_ptr->{RequestErrorCode} = 308;
+										$RequestHash_ptr->{RequestErrorDescr} = "startDateMalfunction nel futuro rispetto a endDateMalfunction";
+									}
+									
+								}
+								else
+								{
+									$rit = 1;
+								}
 							}
 							else
 							{
 								#TODO: errore...non devono esserci allegati per gli alarm
+								$RequestHash_ptr->{RequestErrorCode} = 307;
+								$RequestHash_ptr->{RequestErrorDescr} = "Allegati non previsti per gli Alarm tramite Update";
 							}
 						}
 						else
 						{
 							#TODO: errore... UPDATE permessa solo per gli ALARM
+							$RequestHash_ptr->{RequestErrorCode} = 306;
+							$RequestHash_ptr->{RequestErrorDescr} = "UPADTE non permessa per questo tipo di oggetto ($RequestHash_ptr->{TicketID})";
 						}
 					}
 					else #req type = Notify
 					{
 						if($ConfigHash_ptr->{Ticket}->{WindType} eq $ConfigHash_ptr->{Ticket}->{WindTypeALARM})
 						{
-							if(scalar(@{$RequestHash_ptr->{AttachedFiles}}) == 0) #non devono esserci allegati per gli alarm
+							if(!exists($RequestHash_ptr->{AttachedFiles}) or scalar(@{$RequestHash_ptr->{AttachedFiles}}) == 0) #non devono esserci allegati per gli alarm
 							{
-								if(exists($RequestHash_ptr->{CategoryTT}) and MS_Check_Category($RequestHash_ptr->{CategoryTT}, $ConfigHash_ptr->{Category_Alarm_Wind_PM}))
-								{
+								#if(exists($RequestHash_ptr->{CategoryTT}) and MS_Check_Category($RequestHash_ptr->{CategoryTT}, $ConfigHash_ptr->{Category_Alarm_Wind_PM}))
+								#{
 									#OK... ma controlla che sia per la sola chiusura dell'ALARM
 									if($RequestHash_ptr->{Action} eq 'CLOSE')
 									{
@@ -856,16 +999,20 @@ sub MS_CheckRequestSemantic
 									else
 									{
 										#TODO: errore...tipo di notify non prevista per gli alarm
+										$RequestHash_ptr->{RequestErrorCode} = 305;
+										$RequestHash_ptr->{RequestErrorDescr} = "Tipo di notify non prevista per gli Alarm ($RequestHash_ptr->{Action})";
 									}
-								}
-								else
-								{
-									#TODO: errore...category non prevista per gli alarm
-								}
+								#}
+								#else
+								#{
+								#	#TODO: errore...category non prevista per gli alarm
+								#}
 							}
 							else
 							{
 								#TODO: errore...non devono esserci allegati per gli alarm
+								$RequestHash_ptr->{RequestErrorCode} = 304;
+								$RequestHash_ptr->{RequestErrorDescr} = "Allegati non previsti per gli Alarm tramite Notify";
 							}
 						}
 						else # ****** INCIDENT ******
@@ -878,6 +1025,8 @@ sub MS_CheckRequestSemantic
 							else
 							{
 								#TODO: errore...category non prevista per gli incident
+								$RequestHash_ptr->{RequestErrorCode} = 303;
+								$RequestHash_ptr->{RequestErrorDescr} = "Category non prevista per gli Incident";
 							}
 						}
 					}						
@@ -885,11 +1034,15 @@ sub MS_CheckRequestSemantic
 				else
 				{
 					#TODO: errore... Wind non ha diritti sufficienti per editare questo oggetto
+					$RequestHash_ptr->{RequestErrorCode} = 302;
+					$RequestHash_ptr->{RequestErrorDescr} = "Diritti insufficienti per editare questo oggetto ($RequestHash_ptr->{TicketID})";
 				}				
 			}
 			else
 			{
 				#TODO: errore... tipo di oggetto non appartenente ad ambito FULL o non riconosciuto
+				$RequestHash_ptr->{RequestErrorCode} = 301;
+				$RequestHash_ptr->{RequestErrorDescr} = "Tipo di oggetto non appartenente ad ambito FULL o non riconosciuto";
 			}
 					
 		}
@@ -907,28 +1060,54 @@ sub MS_CheckRequestSemantic
 		{
 			if(exists($RequestHash_ptr->{CategoryTT}) and MS_Check_Category($RequestHash_ptr->{CategoryTT}, $ConfigHash_ptr->{Category_Alarm_Wind_PM}))
 			{
-				if(scalar(@{$RequestHash_ptr->{AttachedFiles}}) == 0) #non devono esserci allegati per gli alarm
+				if(!exists($RequestHash_ptr->{AttachedFiles}) or (ref($RequestHash_ptr->{AttachedFiles}) eq 'ARRAY' and scalar(@{$RequestHash_ptr->{AttachedFiles}}) == 0) ) #non devono esserci allegati per gli alarm
 				{
 					# OOOOOKKKKKK
+					if (exists($RequestHash_ptr->{startDateMalfunction}) and exists($RequestHash_ptr->{endDateMalfunction}))
+					{
+						my $tmp_compare = MS_StringDateCompare($RequestHash_ptr->{startDateMalfunction}, $RequestHash_ptr->{endDateMalfunction});
+						if ($tmp_compare == 0 || $tmp_compare == 2) #endDateMalfunction uguale o nel futuro rispetto a startDateMalfunction
+						{
+							$rit = 1;
+						}
+						else
+						{
+							$RequestHash_ptr->{RequestErrorCode} = 313;
+							$RequestHash_ptr->{RequestErrorDescr} = "startDateMalfunction nel futuro rispetto a endDateMalfunction durante Create";
+						}
+						
+					}
+					else
+					{
+						$rit = 1;
+					}
 				}
 				else
 				{
 					#TODO: errore...non devono esserci allegati per gli alarm
+					$RequestHash_ptr->{RequestErrorCode} = 312;
+					$RequestHash_ptr->{RequestErrorDescr} = "Allegati non previsti per gli Alarm tramite Create";
 				}
 			}
 			else
 			{
 				#TODO: errore...category non prevista
+				$RequestHash_ptr->{RequestErrorCode} = 311;
+				$RequestHash_ptr->{RequestErrorDescr} = "Category non prevista per gli Alarm";
 			}
 		}
 		else
 		{
 			#TODO: errore...create non prevista per oggetti diversi da ALARM
+			$RequestHash_ptr->{RequestErrorCode} = 310;
+			$RequestHash_ptr->{RequestErrorDescr} = "Create non permessa per oggetti diversi da Alarm";
 		}		
 	}
 	else
 	{
 		#TODO: errore...tipo di richiesta non contemplata
+		$RequestHash_ptr->{RequestErrorCode} = 309;
+		$RequestHash_ptr->{RequestErrorDescr} = "Tipo di richiesta non contemplata";
 	}
 
 
@@ -964,6 +1143,8 @@ sub MS_CheckRequestSemantic
 	#
 	# quindi la Notify serve per chiudere anche gli Alarm (e per gli alarm solo a questo)...
 	# - 
+
+
 	
 	return $rit;
 }

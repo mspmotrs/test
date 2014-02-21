@@ -24,7 +24,7 @@ use lib "$Bin/../cpan-lib";
 
 
 # ----------------- Attiva/disattiva debug per sviluppo ------------------
-my $MS_DEBUG = 1; # 0 -> disattivato, 1 -> attivato
+my $MS_DEBUG = 0; # 0 -> disattivato, 1 -> attivato
 
 
 
@@ -76,14 +76,32 @@ sub MS_ResponseToResponseHash
 	
 	
 	my $rootTag = $XMLHash_ptr->[0]->{OTRS_API}[1]->{TicketResponse}[1];
+	if (exists($rootTag->{CreateTTOutput}))
+	{
+		$rootTag = $rootTag->{CreateTTOutput}[1];
+	}
+	elsif (exists($rootTag->{NotifyTTOutput}))
+	{
+		$rootTag = $rootTag->{NotifyTTOutput}[1];
+	}
+	elsif (exists($rootTag->{UpdateTTOutput}))
+	{
+		$rootTag = $rootTag->{UpdateTTOutput}[1];
+	}
+	
 	my $rootTagHeader = $rootTag->{Header}[1];
-	my $rootTagBody = $rootTag->{ResultStatus}[1];
+	#my $rootTagBody = $rootTag->{ResultStatus}[1];
+	my $rootTagBody = $rootTag->{Response}[1];
 	
 	my $ResponseHash_prt = $TicketHash_ptr->{ResponseHash};
 	$ResponseHash_prt->{Header} = {};
-	$ResponseHash_prt->{ResultStatus} = {};
+	#$ResponseHash_prt->{ResultStatus} = {};
+	$ResponseHash_prt->{Response} = {};
+	
 	my $header = $ResponseHash_prt->{Header};
-	my $body = $ResponseHash_prt->{ResultStatus};
+	#my $body = $ResponseHash_prt->{ResultStatus};
+	my $body = $ResponseHash_prt->{Response};
+	
 	
 	
 	foreach my $key (keys(%{$rootTagHeader}))
@@ -110,7 +128,8 @@ sub MS_CheckResponseFromWind
 	
 	my $ResponseHash_ptr = $TicketHash_ptr->{ResponseHash};
 	
-	if (defined($TicketHash_ptr) and exists($ResponseHash_ptr->{Header}) and exists($ResponseHash_ptr->{ResultStatus}) )
+	#if (defined($TicketHash_ptr) and exists($ResponseHash_ptr->{Header}) and exists($ResponseHash_ptr->{ResultStatus}) )
+	if (defined($TicketHash_ptr) and exists($ResponseHash_ptr->{Header}) and exists($ResponseHash_ptr->{Response}) )
 	{
 		my $TransactionId = $TicketHash_ptr->{RequestHash}->{HEADER}->{TransactionId};
 	
@@ -123,14 +142,20 @@ sub MS_CheckResponseFromWind
 			#debug
 			print "\nYYY2\n" if($MS_DEBUG);			
 			
-			if (exists($ResponseHash_ptr->{ResultStatus}->{StatusCode}) )
+			#if (exists($ResponseHash_ptr->{ResultStatus}->{StatusCode}) )
+			if (exists($ResponseHash_ptr->{Response}->{ReturnCode}) )
 			{
-				if ($ResponseHash_ptr->{ResultStatus}->{StatusCode} == 0 )
+				#if ($ResponseHash_ptr->{ResultStatus}->{StatusCode} == 0 )
+				if ($ResponseHash_ptr->{Response}->{ReturnCode} == 0 )
 				{
 					if ($RequestType =~ m/^CREATE$/i)
 					{
-						if(exists($ResponseHash_ptr->{ResultStatus}->{TicketID}) )
+						#if(exists($ResponseHash_ptr->{ResultStatus}->{TicketID}) )
+						if(exists($ResponseHash_ptr->{Response}->{idTT}) )
 						{
+							#$ResponseHash_ptr->{ResultStatus}->{TicketID} = $ResponseHash_ptr->{ResultStatus}->{idTT}; #legacy
+							$ResponseHash_ptr->{Response}->{TicketID} = $ResponseHash_ptr->{Response}->{idTT}; #legacy
+							
 							$ResponseHash_ptr->{ResponseErrorCode} = 0;
 							$ResponseHash_ptr->{ResponseErrorMessage} = '';
 							$rit = 1;
@@ -144,8 +169,11 @@ sub MS_CheckResponseFromWind
 					}
 					elsif($RequestType =~ m/^UPDATE$/i)
 					{
-						if(exists($ResponseHash_ptr->{ResultStatus}->{Status}) )
+						#if(exists($ResponseHash_ptr->{ResultStatus}->{Status}) )
+						if(exists($ResponseHash_ptr->{Response}->{status}) )
 						{
+							$ResponseHash_ptr->{Response}->{Status} = $ResponseHash_ptr->{Response}->{status}; #legacy
+							
 							$ResponseHash_ptr->{ResponseErrorCode} = 0;
 							$ResponseHash_ptr->{ResponseErrorMessage} = '';
 							$rit = 1; #tutto ok
@@ -165,10 +193,13 @@ sub MS_CheckResponseFromWind
 				}
 				else
 				{
-					if(exists($ResponseHash_ptr->{ResultStatus}->{ErrorMessage})  and exists($ResponseHash_ptr->{ResultStatus}->{ErrorDescription}) )
+					#if(exists($ResponseHash_ptr->{ResultStatus}->{ErrorMessage})  and exists($ResponseHash_ptr->{ResultStatus}->{ErrorDescription}) )
+					if(exists($ResponseHash_ptr->{Response}->{ErrorMessage})  and exists($ResponseHash_ptr->{Response}->{ErrorDescription}) )
 					{
-						$ResponseHash_ptr->{ResponseErrorCode} = $ResponseHash_ptr->{ResultStatus}->{ErrorMessage}; 
-						$ResponseHash_ptr->{ResponseErrorMessage} = $ResponseHash_ptr->{ResultStatus}->{ErrorDescription};
+						#$ResponseHash_ptr->{ResponseErrorCode} = $ResponseHash_ptr->{ResultStatus}->{ErrorMessage}; 
+						#$ResponseHash_ptr->{ResponseErrorMessage} = $ResponseHash_ptr->{ResultStatus}->{ErrorDescription};
+						$ResponseHash_ptr->{ResponseErrorCode} = $ResponseHash_ptr->{Response}->{ErrorMessage}; 
+						$ResponseHash_ptr->{ResponseErrorMessage} = $ResponseHash_ptr->{Response}->{ErrorDescription};
 					}
 					else
 					{

@@ -1,0 +1,1362 @@
+# --
+# AgentTicketZoom.dtl - provides HTML for AgentTicketZoom.pm
+# Copyright (C) 2001-2010 OTRS AG, http://otrs.org/
+# --
+# $Id: AgentTicketZoom.dtl,v 1.62.2.2 2010/01/31 16:41:01 ub Exp $
+# --
+# This software comes with ABSOLUTELY NO WARRANTY. For details, see
+# the enclosed file COPYING for license information (AGPL). If you
+# did not receive this file, see http://www.gnu.org/licenses/agpl.txt.
+# --
+
+
+
+<!-- dtl:block:ArticleFilterDialog -->
+$Include{"AgentTicketZoomArticleFilterDialog"}
+<!-- dtl:block:ArticleFilterDialog -->
+
+<!-- dtl:block:Header -->
+<script language="JavaScript" type="text/javascript">
+<!--
+ 
+// MS Full (inizio)
+
+function MS_show_Wind_fields() 
+{   
+	var MS_current_ticket_typeID = '$Env{"MS_current_ticket_typeID"}';
+   var MS_current_ticket_vf_closing_code = '$Env{"MS_current_ticket_vf_closing_code"}';
+   var MS_current_ticket_vf_error_message = '$Env{"MS_current_ticket_vf_error_message"}'; //per Wind popolo con 'MS_full'
+   
+   var MS_freetext9 = '$QData{"TicketFreeText9"}'; // Wind Ticket ID
+   var MS_freetext16 = '$QData{"TicketFreeText16"}'; //Referente
+	var MS_freetime1 = '$QData{"TicketFreeTime1"}'; //Inizio disservizio (Alarm)
+	var MS_freetime2 = '$QData{"TicketFreeTime2"}'; //Fine disservizio (Alarm)
+	var MS_freetime3 = '$QData{"TicketFreeTime3"}'; //Expiration Date (TTL) (Incident)
+   
+   // i nuovi tipi di ticket
+   var MS_ticketTypeID_IncidentToWind = '$Env{"MS_ticketTypeID_IncidentToWind"}';
+   var MS_ticketTypeID_IncidentToPM = '$Env{"MS_ticketTypeID_IncidentToPM"}';
+   var MS_ticketTypeID_IncidentToEricsson = '$Env{"MS_ticketTypeID_IncidentToEricsson"}';
+   var MS_ticketTypeID_AlarmFromWind = '$Env{"MS_ticketTypeID_AlarmFromWind"}';
+   var MS_ticketTypeID_AlarmToWind = '$Env{"MS_ticketTypeID_AlarmToWind"}';
+   var MS_ticketTypeID_AlarmToEricsson = '$Env{"MS_ticketTypeID_AlarmToEricsson"}';
+   var MS_ticketTypeID_AlarmToPM = '$Env{"MS_ticketTypeID_AlarmToPM"}';
+   
+  
+  var MS_tipo_ticket_attuale = '$QData{"Type"}'; 
+  
+  
+	// sono in ambito Wind/Full?
+    if( 	( (MS_tipo_ticket_attuale == "SR-Alarm/Reclamo" || MS_tipo_ticket_attuale == "SR-Escalation"
+        		|| MS_tipo_ticket_attuale == "SR-Sollecito" || MS_tipo_ticket_attuale == "PR Master") && 
+        		(MS_current_ticket_vf_error_message == 'MS_full' || MS_current_ticket_vf_closing_code != '')
+        	)
+        	
+        	||
+        	
+        	( 	MS_current_ticket_typeID == MS_ticketTypeID_IncidentToWind ||
+        		MS_current_ticket_typeID == MS_ticketTypeID_IncidentToPM ||
+        		MS_current_ticket_typeID == MS_ticketTypeID_IncidentToEricsson ||
+        		MS_current_ticket_typeID == MS_ticketTypeID_AlarmFromWind ||
+        		MS_current_ticket_typeID == MS_ticketTypeID_AlarmToWind ||
+        		MS_current_ticket_typeID == MS_ticketTypeID_AlarmToEricsson ||
+        		MS_current_ticket_typeID == MS_ticketTypeID_AlarmToPM 
+        	)
+        		
+      )
+      {
+
+      	//rendo visibili le righe di info
+      	document.getElementById("detail_row_MS_full_AMBITOTT").style.display = '';
+      	
+      	if(MS_freetext9 != '')
+      	{
+      		document.getElementById("detail_row_MS_full_TicketFreeText9").style.display = '';
+      	}
+      	
+      	document.getElementById("detail_row_MS_full_MSISDN").style.display = '';
+      	document.getElementById("detail_row_MS_full_ID_LINEA").style.display = '';
+      	document.getElementById("detail_row_MS_full_IMSI").style.display = '';
+      	document.getElementById("detail_row_MS_full_ICCID").style.display = '';
+      	document.getElementById("detail_row_MS_full_IMEI").style.display = '';
+      	document.getElementById("detail_row_MS_full_TIPO_LINEA").style.display = '';
+      	document.getElementById("detail_row_MS_full_MNP_TYPE").style.display = '';
+      	
+      	if(MS_freetext16 != '')
+      	{
+      		document.getElementById("detail_row_MS_full_TicketFreeText16").style.display = '';
+      	}
+      	
+      	if(MS_freetime1 != '' && 
+      			(	MS_current_ticket_typeID == MS_ticketTypeID_AlarmFromWind ||
+        			MS_current_ticket_typeID == MS_ticketTypeID_AlarmToWind ||
+        			MS_current_ticket_typeID == MS_ticketTypeID_AlarmToEricsson ||
+        			MS_current_ticket_typeID == MS_ticketTypeID_AlarmToPM ) 
+        	)
+      	{
+      		document.getElementById("detail_row_MS_full_TicketFreeTime1").style.display = '';
+      	}
+ 
+      	if(MS_freetime2 != '' && 
+      			(	MS_current_ticket_typeID == MS_ticketTypeID_AlarmFromWind ||
+        			MS_current_ticket_typeID == MS_ticketTypeID_AlarmToWind ||
+        			MS_current_ticket_typeID == MS_ticketTypeID_AlarmToEricsson ||
+        			MS_current_ticket_typeID == MS_ticketTypeID_AlarmToPM ) 
+        	)
+      	{     	
+      		document.getElementById("detail_row_MS_full_TicketFreeTime2").style.display = '';
+      	}
+      	
+      	
+      	if(MS_freetime3 != '' && 
+      			(	MS_current_ticket_typeID != MS_ticketTypeID_AlarmFromWind &&
+        			MS_current_ticket_typeID != MS_ticketTypeID_AlarmToWind &&
+        			MS_current_ticket_typeID != MS_ticketTypeID_AlarmToEricsson &&
+        			MS_current_ticket_typeID != MS_ticketTypeID_AlarmToPM ) 
+        	)
+      	{
+      		document.getElementById("detail_row_MS_full_TicketFreeTime3").style.display = '';
+      	}
+      	
+      	
+      	
+      	//cambio PI Categoria in Wind Categoria
+      	if(document.getElementById("MS_category_text") != null)
+      	{
+      		document.getElementById("MS_category_text").innerHTML ='<b>WIND Categoria:</b>';
+      	}
+      	
+      	//nascondo la vecchia gestione di alcuni campi (per evitare si veda tutto lo "stringone")
+      	if(document.getElementById("MS_TicketFreeText2_old") != null)
+      	{
+      		document.getElementById("MS_TicketFreeText2_old").style.display = 'none';
+      	}
+      	
+      	if(document.getElementById("MS_TicketFreeText3_old") != null)
+      	{
+      		document.getElementById("MS_TicketFreeText3_old").style.display = 'none';
+      	}
+      	
+      	
+      }
+      
+}
+
+
+window.onload = MS_show_Wind_fields;
+
+
+
+function MS_validate_for_Wind_common()
+{ 
+	var MS_sep = "#!#";
+	
+	// AMBITO TT per Wind 
+	var MS_AmbitoTT_PM_Wind = '$Env{"MS_AmbitoTT_PM_Wind"}';
+	var MS_AmbitoTT_PM_Wind_ARRAY = MS_AmbitoTT_PM_Wind.split(MS_sep);
+	MS_AmbitoTT_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	// Tipo Linea per Wind 
+	var MS_TipoLinea_PM_Wind = '$Env{"MS_TipoLinea_PM_Wind"}';
+	var MS_TipoLinea_PM_Wind_ARRAY = MS_TipoLinea_PM_Wind.split(MS_sep);
+	MS_TipoLinea_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	// MNP Type per Wind 
+	var MS_MNPType_PM_Wind = '$Env{"MS_MNPType_PM_Wind"}';
+	var MS_MNPType_PM_Wind_ARRAY = MS_MNPType_PM_Wind.split(MS_sep);
+	MS_MNPType_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	// Marcaggio per Wind 
+	var MS_Marcaggio_PM_Wind = '$Env{"MS_Marcaggio_PM_Wind"}';
+	var MS_Marcaggio_PM_Wind_ARRAY = MS_Marcaggio_PM_Wind.split(MS_sep);
+	MS_Marcaggio_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	
+ 	//valori correnti del ticket
+ 	var MS_current_ticket_AmbitoTT = '$Env{"MS_current_ticket_WIND_AMBITOTT"}';
+ 	var MS_current_ticket_TIPO_LINEA  = '$Env{"MS_current_ticket_WIND_TIPO_LINEA"}';
+ 	var MS_current_ticket_MNP_TYPE  = '$Env{"MS_current_ticket_WIND_MNP_TYPE"}';
+ 	var MS_current_ticket_freetext1  = '$QData{"TicketFreeText1"}';
+ 	
+
+
+
+
+	var test_ok = false;
+	
+	for (var i=0;i<MS_AmbitoTT_PM_Wind_ARRAY.length;i++)
+	{
+		if(MS_current_ticket_AmbitoTT == MS_AmbitoTT_PM_Wind_ARRAY[i])
+		{
+			test_ok = true;
+			break;
+		}
+	}
+
+	if(!test_ok)
+	{   					
+		alert('$JSText{"AmbitoTT non corretto"}');
+		return false;					
+	}	
+	
+	
+	
+	
+
+	if(MS_current_ticket_TIPO_LINEA != '')
+	{
+		test_ok = false;
+		for (var i=0;i<MS_TipoLinea_PM_Wind_ARRAY.length;i++)
+		{
+			if(MS_current_ticket_TIPO_LINEA == MS_TipoLinea_PM_Wind_ARRAY[i])
+			{
+				test_ok = true;
+				break;
+			}
+		}
+
+		if(!test_ok)
+		{   					
+			alert('$JSText{"Tipo Linea non corretto"}');
+			return false;					
+		}
+	}
+	
+	
+	
+	
+	if(MS_current_ticket_MNP_TYPE != '')
+	{
+		test_ok = false;
+		for (var i=0;i<MS_MNPType_PM_Wind_ARRAY.length;i++)
+		{
+			if(MS_current_ticket_MNP_TYPE == MS_MNPType_PM_Wind_ARRAY[i])
+			{
+				test_ok = true;
+				break;
+			}
+		}
+
+		if(!test_ok)
+		{   					
+			alert('$JSText{"MNP_TYPE non corretto"}');
+			return false;					
+		}
+	}
+	
+	
+	
+	if(MS_current_ticket_freetext1 != '')
+	{
+		test_ok = false;
+		for (var i=0;i<MS_Marcaggio_PM_Wind_ARRAY.length;i++)
+		{
+			if(MS_current_ticket_freetext1.toUpperCase() == MS_Marcaggio_PM_Wind_ARRAY[i].toUpperCase())
+			{
+				test_ok = true;
+				break;
+			}
+		}
+
+		if(!test_ok)
+		{   					
+			alert('$JSText{"Marcaggio non corretto"}');
+			return false;					
+		}
+	}
+			
+ 	return true;
+}
+
+
+function MS_validate_for_Wind()
+{ 
+	var queueDest = document.getElementsByName("DestQueueID")[0].value;
+	
+	
+	var MS_sep = "#!#";
+	
+	// Categorie ALARM per Wind 
+	var MS_Category_Alarm_PM_Wind = '$Env{"MS_Category_Alarm_PM_Wind"}';
+	var MS_Category_Alarm_PM_Wind_ARRAY = MS_Category_Alarm_PM_Wind.split(MS_sep);
+	MS_Category_Alarm_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+	// Categorie Incident per Wind 
+	var MS_Category_Incident_PM_Wind = '$Env{"MS_Category_Incident_PM_Wind"}';
+	var MS_Category_Incident_PM_Wind_ARRAY = MS_Category_Incident_PM_Wind.split(MS_sep);
+	MS_Category_Incident_PM_Wind_ARRAY.sort(); //ordino alfabeticamente
+	
+   
+   
+   // i nuovi tipi di ticket
+   var MS_ticketTypeID_IncidentToWind = '$Env{"MS_ticketTypeID_IncidentToWind"}';
+   var MS_ticketTypeID_IncidentToPM = '$Env{"MS_ticketTypeID_IncidentToPM"}';
+   var MS_ticketTypeID_IncidentToEricsson = '$Env{"MS_ticketTypeID_IncidentToEricsson"}';
+   var MS_ticketTypeID_AlarmFromWind = '$Env{"MS_ticketTypeID_AlarmFromWind"}';
+   var MS_ticketTypeID_AlarmToWind = '$Env{"MS_ticketTypeID_AlarmToWind"}';
+   var MS_ticketTypeID_AlarmToEricsson = '$Env{"MS_ticketTypeID_AlarmToEricsson"}';
+   var MS_ticketTypeID_AlarmToPM = '$Env{"MS_ticketTypeID_AlarmToPM"}';
+   	
+   	// nuove code
+ 	var MS_queue_id_incident_for_wind = '$Env{"MS_queue_id_incident_for_wind"}';  
+ 	var MS_queue_id_alarm_to_wind = '$Env{"MS_queue_id_alarm_to_wind"}';  
+ 	var MS_queue_id_alarm_from_wind = '$Env{"MS_queue_id_alarm_from_wind"}';  
+ 	var MS_queue_id_ericsson = '$Env{"MS_queue_id_ericsson"}';  
+ 	var MS_queue_id_MVNE_FE_Wind_Ericsson_Alarm = '$Env{"MS_queue_id_MVNE-FE-Wind-Ericsson-Alarm"}';  
+ 	var MS_queue_id_ERICSSON_PM_WIND_OUT = '$Env{"MS_queue_id_ERICSSON_PM_WIND_OUT"}';  
+ 	var MS_queue_id_MVNE_FE_Ericsson_Incident = '$Env{"MS_queue_id_MVNE-FE-Ericsson-Incident"}';  
+ 	var MS_queue_id_ERICSSON_WIND_OUT_Alarm = '$Env{"MS_queue_id_ERICSSON-WIND-OUT-Alarm"}';  
+ 	var MS_queue_id_WIND_ERICSSON_OUT_Alarm = '$Env{"MS_queue_id_WIND-ERICSSON-OUT-Alarm"}';  
+ 	var MS_queue_id_ERICSSON_OUT_Alarm = '$Env{"MS_queue_id_ERICSSON-OUT-Alarm"}';  
+ 	var MS_queue_id_MVNE_FE_Ericsson_Alarm = '$Env{"MS_queue_id_MVNE-FE-Ericsson-Alarm"}';  
+ 	var MS_queue_id_PM_Create = '$Env{"MS_queue_id_PM-Create"}';  
+ 	var MS_queue_id_ERICSSON_Create = '$Env{"MS_queue_id_ERICSSON-Create"}';  
+ 	
+    // tempo di validita' nota per Wind
+    var MS_article_validityTime_ToWind = '$Env{"MS_article_validityTime_ToWind"}'; 
+	
+ 	
+ 	
+ 	//valori correnti del ticket
+ 	var MS_current_ticket_typeID = '$Env{"MS_current_ticket_typeID"}';
+ 	var MS_current_ticket_freetext15 = '$QData{"TicketFreeText15"}';
+ 	var MS_current_ticket_AmbitoTT = '$Env{"MS_current_ticket_WIND_AMBITOTT"}';
+ 	
+ 	var MS_current_ticket_Valid_Article_for_Wind = '$Env{"MS_current_ticket_Valid_Article_for_Wind"}';
+
+
+ 	
+ 	
+	if ( queueDest == MS_queue_id_alarm_from_wind )
+	{
+         alert("Non puoi spostare ticket su questa coda.");
+         return false;	
+	}
+	else if (queueDest == MS_queue_id_incident_for_wind ||
+			queueDest == MS_queue_id_ericsson ||
+			queueDest == MS_queue_id_ERICSSON_PM_WIND_OUT ||
+			queueDest == MS_queue_id_MVNE_FE_Ericsson_Incident
+	)
+	{
+		if ( MS_current_ticket_typeID == MS_ticketTypeID_IncidentToWind ||
+			MS_current_ticket_typeID == MS_ticketTypeID_IncidentToPM ||
+			MS_current_ticket_typeID == MS_ticketTypeID_IncidentToEricsson 
+			
+			|| document.getElementById("MyType").title == "SR-Alarm/Reclamo" 
+    		|| document.getElementById("MyType").title == "SR-Escalation"
+        	|| document.getElementById("MyType").title == "SR-Sollecito"
+        	|| document.getElementById("MyType").title == "PR Master" 
+			) //Incident per Wind, per PM o per Ericsson
+		{
+
+			var category_ok = false;
+			for (var i=0;i<MS_Category_Incident_PM_Wind_ARRAY.length;i++)
+			{
+				if( MS_current_ticket_freetext15 == MS_Category_Incident_PM_Wind_ARRAY[i])
+				{
+					category_ok = true;
+					break;
+				}
+			}
+			
+			if(category_ok)
+			{
+				if( (queueDest == MS_queue_id_incident_for_wind || 
+					queueDest == MS_queue_id_ERICSSON_PM_WIND_OUT) 
+					&& MS_current_ticket_typeID == MS_ticketTypeID_IncidentToWind
+				)
+				{
+					if(MS_current_ticket_Valid_Article_for_Wind > 0)
+					{
+						return MS_validate_for_Wind_common();
+					}
+					else
+					{
+						alert("Nota per Wind non presente o troppo vecchia (max " + MS_article_validityTime_ToWind + " sec)");
+						return false;						
+					}
+				}
+				else
+				{
+					return MS_validate_for_Wind_common();
+				}
+
+			}
+			else
+			{
+				alert('$JSText{"Categoria non corretta per spostare il ticket sulla coda desiderata"}');
+				return false;
+			}
+		} 
+		else
+		{
+			alert('$JSText{"Tipo di ticket non compatibile con lo spostamento sulla coda desiderata"}');
+			return false;	
+		}
+
+	}
+	else if (queueDest == MS_queue_id_alarm_to_wind ||
+			queueDest == MS_queue_id_MVNE_FE_Wind_Ericsson_Alarm ||
+			queueDest == MS_queue_id_ERICSSON_WIND_OUT_Alarm ||
+			queueDest == MS_queue_id_WIND_ERICSSON_OUT_Alarm ||
+			queueDest == MS_queue_id_ERICSSON_OUT_Alarm ||
+			queueDest == MS_queue_id_MVNE_FE_Ericsson_Alarm
+	)  
+    {
+    	if ( MS_current_ticket_typeID == MS_ticketTypeID_AlarmToWind ||
+			MS_current_ticket_typeID == MS_ticketTypeID_AlarmToEricsson ||
+			MS_current_ticket_typeID == MS_ticketTypeID_AlarmToPM 
+		) //ALARM per Wind, per PM o per Ericsson
+    	{
+    		var category_ok = false;
+			for (var i=0;i<MS_Category_Alarm_PM_Wind_ARRAY.length;i++)
+			{
+				if(MS_current_ticket_freetext15 == MS_Category_Alarm_PM_Wind_ARRAY[i])
+				{
+					category_ok = true;
+					break;
+				}
+			}
+			
+			if(category_ok)
+			{
+				return MS_validate_for_Wind_common();
+			}
+			else
+			{
+    			alert('$JSText{"Categoria con valore non possibile per questa tipologia di ticket"}');
+    			return false;		
+			}
+    	}
+    	else
+    	{
+			alert('$JSText{"Tipo di ticket non compatibile con lo spostamento sulla coda desiderata"}');
+			return false;	
+    	}
+    } 
+    
+    
+    return true;
+}
+// MS Full (fine)
+
+
+
+ function check_mandatory_app()
+ { 
+ 
+   //alert(document.getElementById("MyType").title);
+   //alert(document.getElementById("MyQueue").title); 
+   //alert(document.getElementsByName("DestQueueID")[0].value); 
+   //alert( document.getElementById("MyType").title.substring(0, document.getElementById("MyType").title.indexOf(" ")) );
+   //alert( "PICategory: " +  document.getElementById("PICategory").title );
+   //alert( document.getElementById("PICategory").title.substring(0, document.getElementById("PICategory").title.indexOf(".")) );
+
+   //var typePrefix = document.getElementById("MyType").title.substring(0, document.getElementById("MyType").title.indexOf(" "));
+   var typePrefix = document.getElementById("MyType").title.split(/\-|\s/gi)[0];
+   var PICategoryPrefix = "";
+
+   if( document.getElementById("PICategory") != undefined && document.getElementById("PICategory").title != undefined )
+   {
+     PICategoryPrefix = document.getElementById("PICategory").title.split(".")[0];
+   }
+ 
+   var queueDest = document.getElementsByName("DestQueueID")[0].value;
+   
+   typePrefix        = typePrefix;
+   PICategoryPrefix  = PICategoryPrefix;
+  // alert("TYPE: "     + "|"+ typePrefix.toUpperCase()+ "|");
+  // alert("CATEGORY: " + "|"+ PICategoryPrefix + "|");
+  
+  //alert(typePrefix.toUpperCase()+" | "+PICategoryPrefix.toUpperCase());
+   
+   if ( queueDest == "30" )
+   {
+      if(  document.getElementById("MyType").title != "SR-Alarm/Reclamo" 
+        && document.getElementById("MyType").title != "SR-Escalation"
+        && document.getElementById("MyType").title != "SR-Sollecito"
+        && document.getElementById("MyType").title != "Incident per PI"
+        && document.getElementById("MyType").title != "PR Master" 
+        )
+      {
+         alert("Tipo ticket non compatibile con move verso PosteItaliane-OUT.");
+         return false;   
+      } 
+   }
+   else if ( queueDest == "66" )
+   {
+      if( document.getElementById("MyType").title != "Alarm per PI" )
+      {
+         alert("Tipo ticket non compatibile con move verso PosteItaliane-OUT-Alarm.");
+         return false;
+      }
+   }
+   
+   if ( queueDest == "30" || queueDest == "66" )
+   {
+   //    alert(typePrefix.toUpperCase()+" | "+PICategoryPrefix.toUpperCase());
+ 
+      if( typePrefix.toUpperCase() != PICategoryPrefix.toUpperCase() && document.getElementById("MyType").title != "PR Master" ) 
+      {
+         alert("Categoria ticket non compatibile con il Tipo, move non consentita.");
+         return false;
+      }
+      if( document.getElementById("MyType").title == "PR Master" && PICategoryPrefix.toUpperCase() != "INCIDENT" ) 
+      {
+         alert("Categoria ticket non compatibile con il Tipo, inserire una categoria INCIDENT.");
+         return false;
+      } 
+   }
+   
+   return MS_validate_for_Wind();
+
+ }
+
+// -->
+</script>
+
+<!-- start ticket head $Data{"TicketNumber"} -->
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+    <tr>
+        <td width="70%" class="mainhead">
+            $Env{"Box0"}$Text{"Zoom"} $Config{"Ticket::Hook"}: $Data{"TicketNumber"} $Env{"Box1"}
+            $QData{"Title","60"}
+        </td>
+        <td align="right" width="30%" class="mainhead">
+            $Env{"Box0"}$Text{"Age"}: $Data{"Age"}$Env{"Box1"}
+        </td>
+    </tr>
+</table>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+    <tr>
+        <td width="70%" class="menu">
+<!-- dtl:block:Menu -->
+<!-- dtl:block:MenuItemSplit -->
+            -
+<!-- dtl:block:MenuItemSplit -->
+<!-- dtl:block:MenuItem -->
+            <a href="$Env{"Baselink"}$Data{"Link"}" $Data{"LinkParam"} onmouseover="window.status='$JSText{"$QData{"Name"}"}'; return true;" onmouseout="window.status='';" class="menuitem" title="$Text{"$QData{"Description"}"}">$Text{"$QData{"Name"}"}</a>
+<!-- dtl:block:MenuItem -->
+<!-- dtl:block:Menu -->
+        </td>
+        <td align="right" width="30%" class="menu">
+            <table border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                    <td class="mainkey">$Text{"Created"}:</td>
+                    <td class="mainvalue"> $TimeLong{"$Data{"Created"}"}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<!-- dtl:block:Header -->
+<!-- dtl:block:Body -->
+    <tr>
+        <td rowspan="2" valign="top" width="75%" class="mainbody">
+<!-- dtl:block:Tree -->
+            <table border="0" width="100%" cellspacing="0" cellpadding="1">
+<!-- dtl:block:ArticleFilterDialogLink -->
+                <tr>
+                    <td class="$QData{"HighlightStyle"}">
+                        $Text{"Article"} $Text{"Filter"}:
+                        <a href="" id="SetArticleFilter" onclick="return false;">$Text{"Set"}</a>
+<!-- dtl:block:ArticleFilterResetLink -->
+                        <a href="" id="ResetArticleFilter" onclick="return false;">$Text{"Reset"}</a>
+<!-- dtl:block:ArticleFilterResetLink -->
+                    </td>
+                </tr>
+<!-- dtl:block:ArticleFilterDialogLink -->
+                <tr>
+                    <td>
+                        <table border="0" width="100%" cellspacing="0" cellpadding="1">
+<!-- dtl:block:TreeItem -->
+                            <tr class="$QData{"SenderType"}-$QData{"ArticleType"}" onmouseover="this.className='highlight';" onmouseout="this.className='$QData{"SenderType"}-$QData{"ArticleType"}';">
+                                <td class="small">
+                                    <div title="$QData{"From","70"}: $QData{"Subject","200"} - $TimeShort{"$QData{"Created"}"}">
+                                        $Data{"Start2"}$Data{"Space"}$Data{"Stop2"}$Data{"Start"}$Data{"Start2"}&nbsp;$QData{"Count"}.&nbsp;$Data{"Stop2"}&nbsp;<a href="$Env{"Baselink"}Action=AgentTicketZoom&TicketID=$QData{"TicketID"}&ArticleID=$QData{"ArticleID"}&ZoomExpand=$LQData{"ZoomExpand"}#$QData{"ArticleID"}" onmouseover="window.status='$JSText{"$QData{"SenderType"}"} ($Text{"$QData{"ArticleType"}"})'; return true;" onmouseout="window.status='';">$Text{"$QData{"SenderType"}"}&nbsp;($Text{"$QData{"ArticleType"}"})</a>$Data{"Stop"}
+<!-- dtl:block:TreeItemEmail -->
+                                        (<a href="$Env{"Baselink"}Action=AgentTicketPlain&TicketID=$QData{"TicketID"}&ArticleID=$QData{"ArticleID"}" onmouseover="window.status='$JSText{"plain"}'; return true;" onmouseout="window.status='';" title="$Text{"plain"}">$Text{"plain"}</a>)
+<!-- dtl:block:TreeItemEmail -->
+                                        $Data{"Start"}$QData{"From","34"}: $QData{"Subject","36"}$Data{"Stop"}
+                                    </div>
+                                </td>
+                                <td class="small" align="right">
+                                    <nobr>
+<!-- dtl:block:TreeItemAttachmentMore -->
+                                    [..]
+<!-- dtl:block:TreeItemAttachmentMore -->
+<!-- dtl:block:TreeItemAttachment -->
+                                    <a href="$Env{"CGIHandle"}/$LQData{"Filename"}?Action=AgentTicketAttachment&ArticleID=$QData{"ArticleID"}&FileID=$QData{"FileID"}" title="$QData{"Filename"} - $QData{"Filesize"}" $Data{"Target"}><img border="0" src="$Config{"Frontend::ImagePath"}attach-small.png"></a>
+<!-- dtl:block:TreeItemAttachment -->
+                                    </nobr>
+                                </td>
+                                <td class="small" align="right">
+                                    <nobr>$Data{"Start"}$TimeShort{"$QData{"Created"}"}$Data{"Stop"}</nobr>
+                                </td>
+                            </tr>
+<!-- dtl:block:TreeItem -->
+                        </table>
+                    </td>
+                </tr>
+            </table>
+<!-- dtl:block:Tree -->
+            <hr size="2">
+            <a name="$QData{"ArticleID"}"></a>
+            <table border="0" width="100%" cellspacing="0" cellpadding="1">
+                <tr>
+                    <td width="98%" valign="top">
+                        <table border="0" width="100%" cellspacing="0" cellpadding="1">
+# From:, To:, Cc:
+<!-- dtl:block:Row -->
+                            <tr>
+                                <td class="contentkey" width="15%">$Text{"$Data{"Key"}"}:</td>
+                                <td class="contentvalue" width="85%"> <div title="$QData{"Value"}">$QData{"Value","200"}</div></td>
+                            </tr>
+<!-- dtl:block:Row -->
+                            <tr>
+                                <td class="contentkey">$Text{"Created"}:</td>
+                                <td class="contentvalue"> <div title="$TimeLong{"$Data{"Created"}"}">$TimeLong{"$Data{"Created"}"}</div></td>
+                            </tr>
+# show the ArticleFreeKey1-3 and ArticleFreeText1-3
+<!-- dtl:block:ArticleFreeText -->
+                            <tr>
+                                <td class="contentkey" width="15%">$QData{"Key"}:</td>
+                                <td class="contentvalue" width="85%"> <div title="$QData{"Value"}">$QData{"Value","160"}</div></td>
+                            </tr>
+<!-- dtl:block:ArticleFreeText -->
+# show ArticleFreeKey1-3 and ArticleFreeText1-3 (in other way like the block, so you could add link or somethin else)
+#      <dtl if ($Data{"ArticleFreeKey1"} ne "") { $Data{"ArticleFreeString1"} = "<tr><td class="contentkey">$QData{"ArticleFreeKey1"}:</td><td class="contentvalue"> $QData{"FreeText1"}</td></tr>"; }>
+#      <dtl if ($Data{"ArticleFreeKey2"} ne "") { $Data{"ArticleFreeString2"} = "<tr><td class="contentkey">$QData{"ArticleFreeKey2"}:</td><td class="contentvalue"> $QData{"FreeText2"}</td></tr>"; }>
+#      <dtl if ($Data{"ArticleFreeKey3"} ne "") { $Data{"ArticleFreeString3"} = "<tr><td class="contentkey">$QData{"ArticleFreeKey3"}:</td><td class="contentvalue"> $QData{"FreeText3"}</td></tr>"; }>
+#    $Data{"ArticleFreeString1"}
+#    $Data{"ArticleFreeString2"}
+#    $Data{"ArticleFreeString3"}
+
+# show article options like signed, crypted, ...
+<!-- dtl:block:ArticleOption -->
+                            <dtl if ($Data{"Successful"} eq "0") { $Data{"StartFont"} = "<font color="red">"; }>
+                            <dtl if ($Data{"Successful"} eq "0") { $Data{"StopFont"} = "</font>"; }>
+                            <dtl if ($Data{"Successful"} eq "1") { $Data{"StartFont"} = "<font color="green">"; }>
+                            <dtl if ($Data{"Successful"} eq "1") { $Data{"StopFont"} = "</font>"; }>
+                            <tr>
+                                <td class="contentkey" width="15%">$Text{"$Data{"Key"}"}:</td>
+                                <td class="contentvalue" width="85%"> <div title="$QData{"Value"}">$Data{"StartFont"}$QData{"Value","160"}$Data{"StopFont"}</div></td>
+                            </tr>
+<!-- dtl:block:ArticleOption -->
+# show attachments
+<!-- dtl:block:ArticleAttachment -->
+                            <tr>
+                                <td class="contentkey" width="15%">$Text{"$Data{"Key"}"}:</td>
+                                <td class="contentvalue" width="85%">
+                                    <table border="0" cellspacing="0" cellpadding="1">
+<!-- dtl:block:ArticleAttachmentRow -->
+                                        <tr>
+                                            <td>$QData{"Filename"}</td>
+                                            <td>
+<!-- dtl:block:ArticleAttachmentRowLink -->
+                                                <a href="$Data{"Link"}" $Data{"Target"} onmouseover="window.status='$JSText{"$QData{"Action"}"}: $JSText{"$QData{"Filename"}"}';return true;" onmouseout="window.status='';"><img src="$Config{"Frontend::ImagePath"}$QData{"Image"}" border="0" alt="$Text{"$QData{"Action"}"}" title="$Text{"$QData{"Action"}"}"></a>
+<!-- dtl:block:ArticleAttachmentRowLink -->
+<!-- dtl:block:ArticleAttachmentRowNoLink -->
+                                                <img src="$Config{"Frontend::ImagePath"}$QData{"Image"}" border="0" alt="$Text{"$QData{"Action"}"}" title="$Text{"$QData{"Action"}"}">
+<!-- dtl:block:ArticleAttachmentRowNoLink -->
+                                            </td>
+                                            <td align="right">$QData{"Filesize"}</td>
+                                        </tr>
+<!-- dtl:block:ArticleAttachmentRow -->
+                                    </table>
+                                </td>
+                            </tr>
+<!-- dtl:block:ArticleAttachment -->
+                        </table>
+
+<!-- dtl:block:BodyPlain -->
+$Data{"BodyNote"}
+                        <div class="message">
+$Data{"Body"}
+                        </div>
+<!-- dtl:block:BodyPlain -->
+<!-- dtl:block:BodyHTML -->
+                        <div class="message">
+                            <script src="$Config{"Frontend::YUIPath"}build/yahoo/yahoo-min.js" type="text/javascript"></script>
+                            <script src="$Config{"Frontend::YUIPath"}build/dom/dom-min.js" type="text/javascript"></script>
+                            <script src="$Config{"Frontend::YUIPath"}build/event/event-min.js" type="text/javascript"></script>
+                            <script src="$Config{"Frontend::YUIPath"}build/element/element-min.js" type="text/javascript"></script>
+                            <script language="JavaScript" type="text/javascript">
+<!--
+                            function IframeAutoHeight( IframeID ) {
+                            var Dom = YAHOO.util.Dom;
+                            var iframe = new YAHOO.util.Element( IframeID );
+                            var newHeight = iframe.get('element').contentWindow.document.body.scrollHeight;
+                            if ( !newHeight || isNaN( newHeight ) ) {
+                            newHeight = $Config{"Ticket::Frontend::HTMLArticleHeightDefault"};
+                            }
+                            else if ( newHeight > $Config{"Ticket::Frontend::HTMLArticleHeightMax"} ) {
+                            newHeight = $Config{"Ticket::Frontend::HTMLArticleHeightMax"};
+                            }
+                            Dom.setStyle(iframe, 'height', newHeight);
+                            }
+                            //-->
+                            </script>
+                            <iframe width="100%" frameborder="0" border="0" marginwidth="0" marginheight="0" leftmargin="0" topmargin="0" style="width: 100%;" id="iframe$QData{"ArticleID"}" onload="IframeAutoHeight('iframe$QData{"ArticleID"}');" src="$Env{"Baselink"}Action=AgentTicketAttachment&Subaction=HTMLView&ArticleID=$QData{"ArticleID"}&FileID=$QData{"AttachmentIDOfHTMLBody"}"></iframe>
+                        </div>
+<!-- dtl:block:BodyHTML -->
+                    </td>
+                    <td valign="top">
+<!-- dtl:block:Expand -->
+                        <div title="$Text{"Expand View"}">
+                            <a href="$Env{"Baselink"}Action=AgentTicketZoom&TicketID=$QData{"TicketID"}&ArticleID=$QData{"ArticleID"}&ZoomExpand=1" onmouseover="window.status='$JSText{"Expand View"}'; return true;" onmouseout="window.status='';"><img border="0" src="$Config{"Frontend::ImagePath"}expand.png"></a>
+                        </div>
+<!-- dtl:block:Expand -->
+<!-- dtl:block:Collapse -->
+                        <div title="$Text{"Collapse View"}">
+                            <a href="$Env{"Baselink"}Action=AgentTicketZoom&TicketID=$QData{"TicketID"}&ArticleID=$QData{"ArticleID"}&ZoomExpand=0" onmouseover="window.status='$JSText{"Collapse View"}'; return true;" onmouseout="window.status='';"><img border="0" src="$Config{"Frontend::ImagePath"}collapse.png"></a>
+                        </div>
+<!-- dtl:block:Collapse -->
+                    </td>
+                </tr>
+            </table>
+<!-- dtl:block:LinkTableComplex -->
+            <hr size="2">
+            <br>
+            <table width="98%" align="center" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                    <td>
+                        $Data{"LinkTableStrg"}
+                    </td>
+                </tr>
+            </table>
+<!-- dtl:block:LinkTableComplex -->
+        </td>
+        <td width="25%" valign="top" class="PriorityID-$Data{"PriorityID"}">
+# show ticket status (state, lock, ...)
+<!-- dtl:block:Status -->
+            <table border="0" cellspacing="1" cellpadding="0" width="100%">
+<!-- dtl:block:Type -->
+                <tr valign="top">
+                    <td><b>$Text{"Type"}:</b></td>
+                    <td>
+                        <div id="MyType" title="$QData{"Type"}">$QData{"Type","18"}</div>
+                    </td>
+                </tr>
+<!-- dtl:block:Type -->
+                <tr valign="top">
+                    <td><b>$Text{"State"}:</b></td>
+                    <td>
+                        <font color="red">
+                        <div title="$Quote{"$Text{"$Data{"State"}"}"}">$Quote{"$Text{"$Data{"State"}"}","18"}</div>
+                        </font>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td><b>$Text{"Locked"}:</b></td>
+                    <td>
+                        <font color="red">
+                        <div title="$Quote{"$Text{"$Data{"Lock"}"}"}">$Quote{"$Text{"$Data{"Lock"}"}","18"}</div>
+                        </font>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td><b>$Text{"Priority"}:</b></td>
+                    <td>
+                        <font color="red">
+                        <div title="$Quote{"$Text{"$Data{"Priority"}"}"}">$Quote{"$Text{"$Data{"Priority"}"}","18"}</div>
+                        </font>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td><b>$Text{"Queue"}:</b></td>
+                    <td>
+                        <font color="red">
+                        <div id="MyQueue" title="$QData{"Queue"}">$QData{"Queue","18"}</div>
+                        </font>
+                    </td>
+                </tr>
+<!-- dtl:block:Service -->
+                <tr valign="top">
+                    <td><b>$Text{"Service"}:</b></td>
+                    <td>
+                        <div title="$QData{"Service"}">$QData{"Service","18"}</div>
+                    </td>
+                </tr>
+<!-- dtl:block:Service -->
+<!-- dtl:block:SLA -->
+                <tr valign="top">
+                    <td><b>$Text{"SLA"}:</b></td>
+                    <td>
+                        <div title="$QData{"SLA"}">$QData{"SLA","18"}</div>
+                    </td>
+                </tr>
+<!-- dtl:block:SLA -->
+<!-- dtl:block:FirstResponseTime -->
+                <tr valign="top">
+                    <td><b>$Text{"First Response Time"}:</b></td>
+                    <td>
+<!-- dtl:block:FirstResponseTimeFontStart -->
+                        <font color="red">
+<!-- dtl:block:FirstResponseTimeFontStart -->
+                        <div title="$Text{"Service Time"}: $QData{"FirstResponseTimeWorkingTime"}">
+                            $QData{"FirstResponseTimeHuman"}
+                            <br/>
+                            $TimeShort{"$QData{"FirstResponseTimeDestinationDate"}"}
+                        </div>
+<!-- dtl:block:FirstResponseTimeFontStop -->
+                        </font>
+<!-- dtl:block:FirstResponseTimeFontStop -->
+                    </td>
+                </tr>
+<!-- dtl:block:FirstResponseTime -->
+<!-- dtl:block:UpdateTime -->
+                <tr valign="top">
+                    <td><b>$Text{"Update Time"}:</b></td>
+                    <td>
+<!-- dtl:block:UpdateTimeFontStart -->
+                        <font color="red">
+<!-- dtl:block:UpdateTimeFontStart -->
+                        <div title="$Text{"Service Time"}: $QData{"UpdateTimeWorkingTime"}">
+                            $QData{"UpdateTimeHuman"}
+                            <br/>
+                            $TimeShort{"$QData{"UpdateTimeDestinationDate"}"}
+                        </div>
+<!-- dtl:block:UpdateTimeFontStop -->
+                        </font>
+<!-- dtl:block:UpdateTimeFontStop -->
+                    </td>
+                </tr>
+<!-- dtl:block:UpdateTime -->
+<!-- dtl:block:SolutionTime -->
+                <tr valign="top">
+                    <td><b>$Text{"Solution Time"}:</b></td>
+                    <td>
+<!-- dtl:block:SolutionTimeFontStart -->
+                        <font color="red">
+<!-- dtl:block:SolutionTimeFontStart -->
+                        <div title="$Text{"Service Time"}: $QData{"SolutionTimeWorkingTime"}">
+                            $QData{"SolutionTimeHuman"}
+                            <br/>
+                            $TimeShort{"$QData{"SolutionTimeDestinationDate"}"}
+                        </div>
+<!-- dtl:block:SolutionTimeFontStop -->
+                        </font>
+<!-- dtl:block:SolutionTimeFontStop -->
+                    </td>
+                </tr>
+<!-- dtl:block:SolutionTime -->
+                <tr valign="top">
+                    <td><b>$Text{"CustomerID"}:</b></td>
+                    <td>
+                        <a href="$Config{"CustomerDBLink"}" $Config{"CustomerDBLinkTarget"}>$Quote{"$Data{"CustomerID"}","18"}</a>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td><b>$Text{"Accounted time"}:</b></td>
+                    <td>$Data{"TicketTimeUnits"}</td>
+                </tr>
+# use ticket is pending
+                <dtl if ($Data{"PendingUntil"} ne "") { $Data{"PendingUntilString"} = "<tr valign="top"><td><b>$Text{"Pending till"}:</b></td><td>$Data{"PendingUntil"}</td></tr>"; }>
+                $Data{"PendingUntilString"}
+<!-- dtl:block:Owner -->
+                <tr  valign="top">
+                    <td><b>$Text{"Owner"}:</b></td>
+                    <td>
+                        <div title="$QData{"UserLogin"} ($QData{"UserFirstname"}$QData{"UserLastname"})">
+                            $QData{"UserLogin","18"} ($Quote{"$Data{"UserFirstname"} $Data{"UserLastname"}","18"})
+                        </div>
+                    </td>
+                </tr>
+<!-- dtl:block:Owner -->
+<!-- dtl:block:Responsible -->
+                <tr  valign="top">
+                    <td><b>$Text{"Responsible"}:</b></td>
+                    <td>
+                        <div title="$QData{"UserLogin"} ($QData{"UserFirstname"}$QData{"UserLastname"})">
+                            $QData{"UserLogin","18"} ($Quote{"$Data{"UserFirstname"} $Data{"UserLastname"}","18"})
+                        </div>
+                    </td>
+                </tr>
+<!-- dtl:block:Responsible -->
+# show TicketFreeKey1-16 and TicketFreeText1-16
+#<!-- dtl:block:TicketFreeText -->
+#                <tr valign="top">
+#                    <td><b>$QData{"TicketFreeKey","25"}:</b></td>
+#                    <td>
+#<!-- dtl:block:TicketFreeTextPlain -->
+#                        <div title="$QData{"TicketFreeText"}">$QData{"TicketFreeText","25"}</div>
+#<!-- dtl:block:TicketFreeTextPlain -->
+#<!-- dtl:block:TicketFreeTextLink -->
+#                        <div title="$QData{"TicketFreeText"}"><a href="$Data{"TicketFreeTextLink"}" target="_blank">$QData{"TicketFreeText","25"}</a></div>
+#<!-- dtl:block:TicketFreeTextLink -->
+#                    </td>
+#                </tr>
+#<!-- dtl:block:TicketFreeText -->
+#<!-- dtl:block:TicketFreeText1 -->
+#          <tr valign="top">
+#            <td><b>$QData{"TicketFreeKey1","25"}:</b></td>
+#            <td>
+#<!-- dtl:block:TicketFreeTextPlain1 -->
+#              <div title="$QData{"TicketFreeText1"}">$QData{"TicketFreeText1","25"}</div>
+#<!-- dtl:block:TicketFreeTextPlain1 -->
+#<!-- dtl:block:TicketFreeTextLink1 -->
+#              <div title="$QData{"TicketFreeText1"}"><a href="$Config{"TicketFreeTextLink1"}" target="_blank">$QData{"TicketFreeText1","25"}</a></div>
+#<!-- dtl:block:TicketFreeTextLink1 -->
+#            </td>
+#          </tr>
+#<!-- dtl:block:TicketFreeText1 -->
+#<!-- dtl:block:TicketFreeText2 -->
+#          <tr valign="top">
+#            <td><b>$QData{"TicketFreeKey2","25"}:</b></td>
+#            <td>
+#<!-- dtl:block:TicketFreeTextPlain2 -->
+#              <div title="$QData{"TicketFreeText2"}">$QData{"TicketFreeText2","25"}</div>
+#<!-- dtl:block:TicketFreeTextPlain2 -->
+#<!-- dtl:block:TicketFreeTextLink2 -->
+#              <div title="$QData{"TicketFreeText2"}"><a href="$Config{"TicketFreeTextLink2"}" target="_blank">$QData{"TicketFreeText2","25"}</a></div>
+#<!-- dtl:block:TicketFreeTextLink2 -->
+#            </td>
+#          </tr>
+#<!-- dtl:block:TicketFreeText2 -->
+
+
+
+
+
+
+
+
+#CR1686 - Dettagli TicketFreeText per controlli sulla Category - START
+<!-- dtl:block:TicketFreeText1 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey1","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain1 -->
+              <div title="$QData{"TicketFreeText1"}">$QData{"TicketFreeText1","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain1 -->
+<!-- dtl:block:TicketFreeTextLink1 -->
+              <div title="$QData{"TicketFreeText1"}"><a href="$Config{"TicketFreeTextLink1"}" target="_blank">$QData{"TicketFreeText1","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink1 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText1 -->
+
+<!-- dtl:block:TicketFreeText2 -->
+          <tr valign="top" id="MS_TicketFreeText2_old">
+            <td><b>$QData{"TicketFreeKey2","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain2 -->
+              <div title="$QData{"TicketFreeText2"}">$QData{"TicketFreeText2","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain2 -->
+<!-- dtl:block:TicketFreeTextLink2 -->
+              <div title="$QData{"TicketFreeText2"}"><a href="$Config{"TicketFreeTextLink2"}" target="_blank">$QData{"TicketFreeText2","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink2 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText2 -->
+
+<!-- dtl:block:TicketFreeText3 -->
+          <tr valign="top" id="MS_TicketFreeText3_old">
+            <td><b>$QData{"TicketFreeKey3","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain3 -->
+              <div title="$QData{"TicketFreeText3"}">$QData{"TicketFreeText3","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain3 -->
+<!-- dtl:block:TicketFreeTextLink3 -->
+              <div title="$QData{"TicketFreeText3"}"><a href="$Config{"TicketFreeTextLink3"}" target="_blank">$QData{"TicketFreeText3","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink3 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText3 -->
+
+<!-- dtl:block:TicketFreeText4 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey4","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain4 -->
+              <div title="$QData{"TicketFreeText4"}">$QData{"TicketFreeText4","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain4 -->
+<!-- dtl:block:TicketFreeTextLink4 -->
+              <div title="$QData{"TicketFreeText4"}"><a href="$Config{"TicketFreeTextLink4"}" target="_blank">$QData{"TicketFreeText4","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink4 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText4 -->
+
+<!-- dtl:block:TicketFreeText5 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey5","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain5 -->
+              <div title="$QData{"TicketFreeText5"}">$QData{"TicketFreeText5","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain5 -->
+<!-- dtl:block:TicketFreeTextLink5 -->
+              <div title="$QData{"TicketFreeText5"}"><a href="$Config{"TicketFreeTextLink5"}" target="_blank">$QData{"TicketFreeText5","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink5 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText5 -->
+
+<!-- dtl:block:TicketFreeText6 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey6","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain6 -->
+              <div title="$QData{"TicketFreeText6"}">$QData{"TicketFreeText6","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain6 -->
+<!-- dtl:block:TicketFreeTextLink6 -->
+              <div title="$QData{"TicketFreeText6"}"><a href="$Config{"TicketFreeTextLink6"}" target="_blank">$QData{"TicketFreeText6","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink6 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText6 -->
+
+<!-- dtl:block:TicketFreeText7 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey7","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain7 -->
+              <div title="$QData{"TicketFreeText7"}">$QData{"TicketFreeText7","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain7 -->
+<!-- dtl:block:TicketFreeTextLink7 -->
+              <div title="$QData{"TicketFreeText7"}"><a href="$Config{"TicketFreeTextLink7"}" target="_blank">$QData{"TicketFreeText7","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink7 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText7 -->
+
+<!-- dtl:block:TicketFreeText8 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey8","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain8 -->
+              <div title="$QData{"TicketFreeText8"}">$QData{"TicketFreeText8","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain8 -->
+<!-- dtl:block:TicketFreeTextLink8 -->
+              <div title="$QData{"TicketFreeText8"}"><a href="$Config{"TicketFreeTextLink8"}" target="_blank">$QData{"TicketFreeText8","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink8 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText8 -->
+
+<!-- dtl:block:TicketFreeText9 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey9","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain9 -->
+              <div title="$QData{"TicketFreeText9"}">$QData{"TicketFreeText9","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain9 -->
+<!-- dtl:block:TicketFreeTextLink9 -->
+              <div title="$QData{"TicketFreeText9"}"><a href="$Config{"TicketFreeTextLink9"}" target="_blank">$QData{"TicketFreeText9","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink9 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText9 -->
+
+<!-- dtl:block:TicketFreeText12 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey12","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain12 -->
+              <div title="$QData{"TicketFreeText12"}">$QData{"TicketFreeText12","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain12 -->
+<!-- dtl:block:TicketFreeTextLink12 -->
+              <div title="$QData{"TicketFreeText12"}"><a href="$Config{"TicketFreeTextLink12"}" target="_blank">$QData{"TicketFreeText12","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink12 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText12 -->
+
+<!-- dtl:block:TicketFreeText13 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey13","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain13 -->
+              <div title="$QData{"TicketFreeText13"}">$QData{"TicketFreeText13","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain13 -->
+<!-- dtl:block:TicketFreeTextLink13 -->
+              <div title="$QData{"TicketFreeText13"}"><a href="$Config{"TicketFreeTextLink13"}" target="_blank">$QData{"TicketFreeText13","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink13 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText13 -->
+
+<!-- dtl:block:TicketFreeText14 -->
+          <tr valign="top">
+            <td><b>$QData{"TicketFreeKey14","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain14 -->
+              <div title="$QData{"TicketFreeText14"}">$QData{"TicketFreeText14","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain14 -->
+<!-- dtl:block:TicketFreeTextLink14 -->
+              <div title="$QData{"TicketFreeText14"}"><a href="$Config{"TicketFreeTextLink14"}" target="_blank">$QData{"TicketFreeText14","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink14 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText14 -->
+
+<!-- dtl:block:TicketFreeText15 -->
+          <tr valign="top">
+            <td id="MS_category_text"><b>$QData{"TicketFreeKey15","25"}:</b></td>
+            <td>
+<!-- dtl:block:TicketFreeTextPlain15 -->
+              <div id="PICategory" title="$QData{"TicketFreeText15"}">$QData{"TicketFreeText15","25"}</div>
+<!-- dtl:block:TicketFreeTextPlain15 -->
+<!-- dtl:block:TicketFreeTextLink15 -->
+              <div title="$QData{"TicketFreeText15"}"><a href="$Config{"TicketFreeTextLink15"}" target="_blank">$QData{"TicketFreeText15","25"}</a></div>
+<!-- dtl:block:TicketFreeTextLink15 -->
+            </td>
+          </tr>
+<!-- dtl:block:TicketFreeText15 -->
+
+#CR1686 - Dettagli TicketFreeText per controlli sulla Category - END
+
+
+
+
+# -- MS  FULL - inizio --
+<tr valign="top" id="detail_row_MS_full_AMBITOTT" style="display: none;">
+<td >
+	<b>$Text{"AMBITO TT"}: </b>
+</td>
+<td >
+	$Env{"MS_current_ticket_WIND_AMBITOTT"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_TicketFreeText9" style="display: none;">
+<td >
+	<b>$Text{"WIND Ticket ID"}: </b>
+</td>
+<td >
+	$QData{"TicketFreeText9","25"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_MSISDN" style="display: none;">
+<td >
+	<b>$Text{"MSISDN"}: </b>
+</td>
+<td >
+	$Env{"MS_current_ticket_WIND_MSISDN"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_ID_LINEA" style="display: none;">
+<td >
+	<b>$Text{"ID LINEA"}: </b>
+</td>
+<td >
+	$Env{"MS_current_ticket_WIND_ID_LINEA"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_IMSI" style="display: none;">
+<td >
+	<b>$Text{"IMSI"}: </b>
+</td>
+<td >
+	$Env{"MS_current_ticket_WIND_IMSI"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_ICCID" style="display: none;">
+<td >
+	<b>$Text{"ICCID"}: </b>
+</td>
+<td >
+	$Env{"MS_current_ticket_WIND_ICCID"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_IMEI" style="display: none;">
+<td >
+	<b>$Text{"IMEI"}: </b>
+</td>
+<td >
+	$Env{"MS_current_ticket_WIND_IMEI"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_TIPO_LINEA" style="display: none;">
+<td >
+	<b>$Text{"TIPO LINEA"}: </b>
+</td>
+<td >
+	$Env{"MS_current_ticket_WIND_TIPO_LINEA"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_MNP_TYPE" style="display: none;">
+<td >
+	<b>$Text{"MNP TYPE"}: </b>
+</td>
+<td >
+	$Env{"MS_current_ticket_WIND_MNP_TYPE"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_TicketFreeText16" style="display: none;">
+<td >
+	<b>$Text{"Referente"}: </b>
+</td>
+<td >
+	$QData{"TicketFreeText16","25"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_TicketFreeTime1" style="display: none;">
+<td >
+	<b>$Text{"Inizio disservizio"}: </b>
+</td>
+<td >
+	$QData{"TicketFreeTime1","25"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_TicketFreeTime2" style="display: none;">
+<td >
+	<b>$Text{"Fine disservizio"}: </b>
+</td>
+<td >
+	$QData{"TicketFreeTime2","25"}
+</td>
+</tr>
+
+<tr valign="top" id="detail_row_MS_full_TicketFreeTime3" style="display: none;">
+<td >
+	<b>$Text{"Expiration Date (TTL)"}: </b>
+</td>
+<td >
+	$QData{"TicketFreeTime3","25"}
+</td>
+</tr>
+# -- MS  FULL - fine --
+
+
+
+
+
+# use this if you want to show TicketFreeTime1-6
+<!-- dtl:block:TicketFreeTime -->
+                <tr valign="top">
+                    <td><b>$Text{"$QData{"TicketFreeTimeKey"}"}:</b></td>
+                    <td><div title="$TimeShort{"$QData{"TicketFreeTime"}"}">$TimeShort{"$QData{"TicketFreeTime"}"}</div></td>
+                </tr>
+<!-- dtl:block:TicketFreeTime -->
+#<!-- dtl:block:TicketFreeTime1 -->
+#          <tr valign="top">
+#            <td><b>$Text{"$Config{"TicketFreeTimeKey1"}"}:</b></td>
+#            <td><div title="$TimeShort{"$QData{"TicketFreeTime1"}"}">$TimeShort{"$QData{"TicketFreeTime1"}"}</div></td>
+#          </tr>
+#<!-- dtl:block:TicketFreeTime1 -->
+#<!-- dtl:block:TicketFreeTime2 -->
+#          <tr valign="top">
+#            <td><b>$Text{"$Config{"TicketFreeTimeKey2"}"}:</b></td>
+#            <td><div title="$TimeShort{"$QData{"TicketFreeTime2"}"}">$TimeShort{"$QData{"TicketFreeTime2"}"}</div></td>
+#          </tr>
+#<!-- dtl:block:TicketFreeTime2 -->
+
+# object links
+<!-- dtl:block:LinkTableSimple -->
+                $Data{"LinkTableStrg"}
+<!-- dtl:block:LinkTableSimple -->
+            </table>
+# show customer info table
+<!-- dtl:block:CustomerTable -->
+            <p>
+                <hr>
+                <b>$Text{"Customer Info"}:</b>
+                $Data{"CustomerTable"}
+                <hr>
+            </p>
+<!-- dtl:block:CustomerTable -->
+<!-- dtl:block:Status -->
+            <table border="0" cellspacing="0" cellpadding="1" width="95%">
+                <tr>
+                    <td>
+# show compose links
+<!-- dtl:block:AgentAnswer -->
+<!-- dtl:block:AgentAnswerCompose -->
+                        <p>
+                            <b>$Text{"Compose Answer"} ($Text{"email"}):</b>
+                            <br/>
+                            <table border="0">
+                                <tr>
+                                    <td>
+                                        $Data{"StdResponsesStrg"}
+                                    </td>
+                                </tr>
+                            </table>
+                        </p>
+<!-- dtl:block:AgentAnswerCompose -->
+<!-- dtl:block:AgentAnswerPhoneOutbound -->
+                        <p>
+                            <b>$Text{"Contact customer"} ($Text{"phone"}):</b>
+                            <br/>
+                            <table border="0">
+                                <tr>
+                                    <td>
+                                        <li>
+                                            <a href="$Env{"Baselink"}Action=AgentTicketPhoneOutbound&TicketID=$Data{"TicketID"}&QueueID=$Data{"QueueID"}" onmouseover="window.status='$JSText{"Phone call"}'; return true;" onmouseout="window.status='';">$Text{"Phone call"}</a>
+                                        </li>
+$Data{"AgentPhoneStrg"}
+                                    </td>
+                                </tr>
+                            </table>
+                        </p>
+<!-- dtl:block:AgentAnswerPhoneOutbound -->
+<!-- dtl:block:AgentAnswer -->
+# show article links
+<!-- dtl:block:AgentArticleCom -->
+                        <p>
+                            <b>$Text{"Article"}:</b>
+                            <table border="0">
+                                <tr>
+                                    <td>
+# check if print should be shown
+<!-- dtl:block:AgentArticleComPrint -->
+                                        <a href="$Env{"Baselink"}Action=AgentTicketPrint&TicketID=$Data{"TicketID"}&ArticleID=$Data{"ArticleID"}" onmouseover="window.status='$JSText{"Print"}'; return true;" onmouseout="window.status='';" target="print">$Text{"Print"}</a>
+<!-- dtl:block:AgentArticleComPrint -->
+# check if forward should be shown
+<!-- dtl:block:AgentArticleComForward -->
+                                        <a href="$Env{"Baselink"}Action=AgentTicketForward&TicketID=$Data{"TicketID"}&ArticleID=$Data{"ArticleID"}&QueueID=$Data{"QueueID"}" onmouseover="window.status='$JSText{"Forward"}'; return true;" onmouseout="window.status='';">$Text{"Forward"}</a>
+<!-- dtl:block:AgentArticleComForward -->
+# check if bounce should be shown
+<!-- dtl:block:AgentArticleComBounce -->
+                                        <dtl if ($Data{"ArticleType"} eq "email-external") { $Data{"ArticleBounceString"} = "Bounce"; }>
+                                        <dtl if ($Data{"SenderType"} ne "customer") { $Data{"ArticleBounceString"} = ""; }>
+                                        <a href="$Env{"Baselink"}Action=AgentTicketBounce&TicketID=$Data{"TicketID"}&ArticleID=$Data{"ArticleID"}&QueueID=$Data{"QueueID"}" onmouseover="window.status='$JSText{"Bounce"}'; return true;" onmouseout="window.status='';">$Text{"$Data{"ArticleBounceString"}"}</a>
+<!-- dtl:block:AgentArticleComBounce -->
+# check if split should be shown
+<!-- dtl:block:AgentArticleComPhone -->
+                                        <dtl if ($Data{"SenderType"} eq "customer") { $Data{"ArticleSplitString"} = "Split"; }>
+                                        <a href="$Env{"Baselink"}Action=AgentTicketPhone&ArticleID=$Data{"ArticleID"}&QueueID=$Data{"QueueID"}&LinkTicketID=$QData{"TicketID"}" onmouseover="window.status='$JSText{"Split"}'; return true;" onmouseout="window.status='';">$Text{"$Data{"ArticleSplitString"}"}</a>
+<!-- dtl:block:AgentArticleComPhone -->
+                                    </td>
+                                </tr>
+                            </table>
+                        </p>
+<!-- dtl:block:AgentArticleCom -->
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td valign="bottom" class="PriorityID-$Data{"PriorityID"}">
+<!-- dtl:block:Move -->
+            <p>
+                <b>$Text{"Change queue"}:</b><br/>
+                <form action="$Env{"CGIHandle"}" method="get">
+                    <input type="hidden" name="Action" value="AgentTicketMove"/>
+                    <input type="hidden" name="QueueID" value="$QData{"QueueID"}"/>
+                    <input type="hidden" name="TicketID" value="$QData{"TicketID"}"/>
+                    $Data{"MoveQueuesStrg"}
+                    <input class="button" type="submit" value="$Text{"Move"}" onclick="return check_mandatory_app();"/>
+                </form>
+            </p>
+<!-- dtl:block:Move -->
+        </td>
+    </tr>
+<!-- dtl:block:Body -->
+<!-- dtl:block:Footer -->
+</table>
+<!-- dtl:block:Footer -->

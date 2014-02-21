@@ -69,7 +69,7 @@ sub MS_ReadHttpPost
 		
 		if(defined($LogObject_ptr) and (ref $LogObject_ptr eq 'HASH') )
 		{
-			$LogObject_ptr->Log( Priority => 'error', Message => "_MSFull_ [MS_ReadHttpPost]: Arrivato qualcosa via HTTP ma non via POST. Interrompo l'esecuzione. Dettagli:\n $MS_buffer");
+			$LogObject_ptr->Log( Priority => 'notice', Message => "_MSFull_ [MS_ReadHttpPost]: Arrivato qualcosa via HTTP ma non via POST. Interrompo l'esecuzione. Dettagli:\n $MS_buffer");
 		}
 
       
@@ -116,7 +116,7 @@ sub MS_ReadHttpPost
 	if (defined($logLevel) )
 	{
 		#al livello massimo di log (livello 3)... loggo anche la POST raw
-		if ($logLevel > 2)
+		if ($logLevel >= 2)
 		{
 			if(defined($LogObject_ptr) and (ref $LogObject_ptr eq 'HASH') )
 			{

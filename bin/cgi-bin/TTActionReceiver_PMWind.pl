@@ -382,7 +382,15 @@ sub MS_CheckErrorsAndSendResponseToWind
 		#ErrorMessage => $MS_ConfigHash_ptr->{RequestHash}->{RequestErrorCode},
 		#ErrorDescription => $MS_ConfigHash_ptr->{RequestHash}->{RequestErrorDescr},
 		TransactionId => $MS_ConfigHash_ptr->{RequestHash}->{TransactionId},
+		BusinessId => $MS_ConfigHash_ptr->{RequestHash}->{BusinessId},
+		Username => $MS_ConfigHash_ptr->{RequestHash}->{Username},
+		Password => $MS_ConfigHash_ptr->{RequestHash}->{Password},
+		MessageType => $MS_ConfigHash_ptr->{RequestHash}->{MessageType},
+		MessageCode => $MS_ConfigHash_ptr->{RequestHash}->{MessageCode},
+		MessageId => $MS_ConfigHash_ptr->{RequestHash}->{MessageId},
 		#TicketID => TicketID dell'Alarm appena creato,
+
+		MS_InputRequestType => $MS_ConfigHash_ptr->{RequestHash}->{InputRequestType},
 	};
 
 	
@@ -429,7 +437,28 @@ sub MS_CheckErrorsAndSendResponseToWind
 		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'error', Message => "$MS_ConfigHash_ptr->{log_prefix} - Error Codes: ExternalCode=$EC, ExternalDescr=$ED, RequestErrorCode=$REC, RequestErrorDescr=$RED,  InternalCode=$IC, InternalDescr=$ID");		
 	}
 	
-	$infoHashForResponse->{TicketID} = $MS_ConfigHash_ptr->{NewAlarmID} if(defined($MS_ConfigHash_ptr->{NewAlarmID}) and $MS_ConfigHash_ptr->{NewAlarmID} > 0);
+	
+	
+	#recuperiamo il tn se necessario
+	if(defined($MS_ConfigHash_ptr->{NewAlarmID}) and $MS_ConfigHash_ptr->{NewAlarmID} > 0)
+	{
+		$infoHashForResponse->{TicketID} = $MS_ConfigHash_ptr->{NewAlarmID};
+		if (exists($MS_ConfigHash_ptr->{RequestHash}->{TicketID_is_a_TN}) and $MS_ConfigHash_ptr->{RequestHash}->{TicketID_is_a_TN} == 1)
+		{
+			if (exists($MS_ConfigHash_ptr->{NewAlarmTN}) and $MS_ConfigHash_ptr->{NewAlarmTN} !~ m/^\s*$/i)
+			{
+				$infoHashForResponse->{TicketID} = $MS_ConfigHash_ptr->{NewAlarmTN}; #mandiamo il tn invece dell'id
+			}
+		}
+	}
+	
+
+
+	#recuperiamo il tn se necessario
+	if(defined($MS_ConfigHash_ptr->{StatusToSendOnUpdate}) and $MS_ConfigHash_ptr->{StatusToSendOnUpdate} !~ m/^\s*$/i)
+	{	
+		$infoHashForResponse->{Status} = $MS_ConfigHash_ptr->{StatusToSendOnUpdate};
+	}
 	
 	
 	my $responseString = MS_ResponseBuildAndSend($infoHashForResponse);
@@ -439,6 +468,7 @@ sub MS_CheckErrorsAndSendResponseToWind
 	#Log della Reponse...
 	if ($MS_ConfigHash_ptr->{PM_Wind_settings}->{log_level} >= 2)
 	{
+		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} - Request from Wind: ".$MS_ConfigHash_ptr->{RequestHash}->{RequestContent});
 		$MS_ConfigHash_ptr->{OTRS_LogObject}->Log( Priority => 'notice', Message => "$MS_ConfigHash_ptr->{log_prefix} - Response to Wind: $responseString");
 	}
 	
